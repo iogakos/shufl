@@ -1,0 +1,7 @@
+.DS_Store
+**/*.log
+**/*.dvi
+*.aux
+*.zip
+*.ps
+*.pdf
