@@ -71,9 +71,9 @@
 }
 \makeatother
 
-\title{Sample UCL-styled A0 scientific poster \LaTeX}
+\title{Shufl - addressing cold start in music recommendation}
 
-\author{Helen Wilson (with credit to Ed Long, CoMPLEX)\\ University College London}
+\author{Wiktor Grajkowski and Ioannis Gakos\\ University College London}
 
 \begin{document}
 %----------------------------------------------------------------------%
@@ -94,10 +94,16 @@
 %           First column.                                              %
 %----------------------------------------------------------------------%
 \begin{textblock}{7}(0,2.4)
-\Head{Introductory segment}
+\Head{Introduction}
 
 \sf % Selects sans serif family: part of the UCL corporate image!
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Vestibulum justo. Praesent leo. Sed consectetuer. Aenean pretium, diam quis mattis porttitor, elit velit scelerisque sapien, sed convallis ipsum lectus non neque. Morbi in mi eu neque luctus scelerisque. Curabitur odio. Mauris a mi. Aenean iaculis erat vel sapien. Curabitur nulla velit, feugiat quis, imperdiet sit amet, vestibulum ac, diam. Suspendisse a metus. Pellentesque vulputate venenatis eros. In auctor, eros nec sodales faucibus, erat nisl facilisis nisl, ut rutrum nisl nunc eu est. Quisque eget ante at nunc varius ultrices.
+
+\begin{itemize}
+	\item Address cold start problem for both new users and tracks
+	\item Use MagnaTagATune dataset containing user tagged songs
+	\item Convolutional Neural Network Model trained on audio samples
+	\item Based on Sander Dieleman work during internship @ Spotify
+\end{itemize}
 
 \bigskip
 \hrule
@@ -105,7 +111,7 @@ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Vestibulum justo. Prae
 
 \begin{textblock}{7}(0,4.52)
 
-\Head{First Piece of Content}
+\Head{The Problem}
 
 \sf 
 It is worth fiddling around a bit with positioning of the text blocks to get the spacing even. I like a vertical gap of about 0.4 ``block units'' between the horizontal bar at the end of one block and the beginning of the next. There are contruction lines at the end of the \TeX\ file to help with this.
@@ -125,12 +131,16 @@ Figures (and labels using the \LaTeX\ picture environment) work as you would exp
 
 \begin{textblock}{7}(0,8.70)
 
-\Head{Second Piece of Content}
+\Head{Architecture}
 
 \sf
-Sed metus erat, bibendum ac, congue vitae, mattis et, dolor. Maecenas placerat mauris vel purus. Quisque molestie. Morbi eu mi in nibh venenatis aliquet. Pellentesque dapibus sem eget nibh. Donec sit amet felis. Cras lobortis blandit mauris. Cras non augue. Nullam lobortis risus in augue sodales sollicitudin. Proin vulputate gravida mauris. Sed dictum nunc id turpis. Mauris facilisis condimentum nisl. Aliquam tincidunt risus in tellus. Suspendisse dictum laoreet tellus. In hac habitasse platea dictumst. Proin suscipit, tellus ut molestie pulvinar, velit arcu lobortis neque, nec tempus neque sapien quis turpis. Aliquam accumsan. Ut eros mi, iaculis eu, tempor eu, placerat eget, nisi. Morbi nec justo eu sem fermentum accumsan. Nullam quis ipsum.
-
-Vestibulum tincidunt, odio sed tincidunt lobortis, ante pede lacinia neque, a tempus magna dui in massa. Duis accumsan fermentum eros. Vivamus at mauris viverra odio porta venenatis. Nunc sed massa. Fusce hendrerit, lorem eu sollicitudin dapibus, nisi leo vestibulum ligula, in viverra lacus massa vel augue. Curabitur et nisi id dui dignissim blandit. Sed et nisi accumsan ipsum congue imperdiet. Suspendisse volutpat accumsan metus. Morbi est orci, sagittis in, dignissim id, interdum eu, libero. Maecenas hendrerit. Nulla sed magna. Cras tincidunt. Nulla sodales dictum lorem. Curabitur et neque. 
+\begin{itemize}
+	\item Build two models:
+	\begin{itemize}
+		\item Ground truth model based on collaborative filtering obtained from MagnaTagATune dataset
+		\item Neural Network trained to minimize the error of latent representation (output) with the ground truth model
+	\end{itemize}
+\end{itemize}
 
 \bigskip
 \hrule
@@ -140,9 +150,14 @@ Vestibulum tincidunt, odio sed tincidunt lobortis, ante pede lacinia neque, a te
 %           Second column.                                             %
 %----------------------------------------------------------------------%
 \begin{textblock}{7}(8,2.4)
-\Head{Use of Colour}
+\Head{Dataset}
 
 \sf
+\begin{itemize}
+	\item We're MagnaTagATune dataset containing user tagged songs as well as a sample of the audio
+	\item Dataset consists of ~25,000 songs
+\end{itemize}
+
 With the {\tt color} package you can use as much colour as you like: but the \textcolor{Red}{Red} and \textcolor{DarkBlue}{DarkBlue} colours defined here are more useful than the obvious \textcolor{red}{red} and \textcolor{blue}{blue} versions, which tend to seem too bright when printed.
 
 Use spacing as well as colour to highlight a key question or issue: 
@@ -159,7 +174,7 @@ Praesent elementum malesuada mauris. Duis aliquet dolor ut nunc. Pellentesque eu
 
 \begin{textblock}{7}(8,5.25)
 
-\Head{Equations and Tables}
+\Head{Evaluation}
 
 \sf
 Of course, the principal reason for choosing \LaTeX\ is its ability with equations:  
@@ -198,7 +213,7 @@ and, of course, images:
 %----------------------------------------------------------------------%
 \begin{textblock}{7}(16,2.4)
 
-\Head{Sectioning}
+\Head{Possible Extensions}
 
 \Subhead{First Subsection}
 
