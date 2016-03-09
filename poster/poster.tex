@@ -131,16 +131,6 @@
     next. There are contruction lines at the end of the \TeX\ file to help with
     this.
 
-    \begin{center}\includegraphics{fig1.eps}\end{center}
-    \begin{picture}(0,0)
-    \put(435,295){$aL$} 
-    \put(550,80){$a$}
-    \put(510,210){\textcolor{DarkBlue}{$F=6\pi\mu a$}}
-    \end{picture}
-
-    Figures (and labels using the \LaTeX\ picture environment) work as you
-    would expect. 
-
     \bigskip
     \hrule
   \end{textblock}
@@ -168,27 +158,20 @@
   %----------------------------------------------------------------------%
   \begin{textblock}{7}(8,2.4)
     \Head{Dataset}
-
     \sf
-    \begin{itemize}
-      \item We're MagnaTagATune dataset containing user tagged songs as well as
-        a sample of the audio
-      \item Dataset consists of ~25,000 songs
-    \end{itemize}
-
-    With the {\tt color} package you can use as much colour as you like: but
-    the \textcolor{Red}{Red} and \textcolor{DarkBlue}{DarkBlue} colours defined
-    here are more useful than the obvious \textcolor{red}{red} and
-    \textcolor{blue}{blue} versions, which tend to seem too bright when printed.
-
-    Use spacing as well as colour to highlight a key question or issue: 
-    \vspace*{1.15\baselineskip}
-    \begin{center}
-    \textcolor{Red}{Who will rid me of this turbulent priest?}
-    \end{center} 
-    \vspace*{1.15\baselineskip}
-    Praesent elementum malesuada mauris. Duis aliquet dolor ut nunc.
-    Pellentesque euismod augue a odio. 
+    In order to train the CNN, we are using the MagnaTagATune dataset, which
+    was made available by the Magnatune label for the research community. The
+    data was collected using the TagATune game where users annotated audio
+    tracks with audio relevant tags.
+    \\ \\
+    The dataset consists of approximately 26,000 of 29 seconds music clips
+    encoded in 16 kHz, 32kbps, mono mp3, generously contributed by John
+    Buckman, the founder of every MIR researcher's favorite label Magnatune.
+    Each of them annotated with a combination of 188 tags such as "orchestral",
+    "orchestra", "punk", "slow", "blues", "rock" etc. It also contains music
+    similarity annotations in the form of triples where given a triple of songs
+    (A, B, C), metrics of how many players have flagged the song A, B or C as
+    most different from the others.
 
     \bigskip
     \hrule
@@ -236,36 +219,35 @@
   %----------------------------------------------------------------------%
   \begin{textblock}{7}(16,2.4)
 
-  \Head{Possible Extensions}
+    \Head{Possible Extensions}
 
-  \Subhead{First Subsection}
+    \Subhead{User feedback}
+    \sf
 
-  \sf
-  Aenean feugiat, mauris vitae accumsan venenatis, tortor nunc facilisis velit,
-  vel aliquam felis dui non ante. Aenean commodo, sem vel malesuada placerat,
-  erat lacus lacinia magna, quis euismod quam nulla vitae turpis. Vivamus
-  sapien. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices
-  posuere cubilia Curae; Nunc a dolor. Sed diam leo, fringilla non, fermentum
-  non, ultricies tempor, dolor. Mauris vehicula, urna ac bibendum scelerisque,s
-  enim nisl vehicula libero, id blandit enim lacus et neque. Nunc posuere elits
-  at erat. Integer commodo, eros dapibus blandit facilisis, dolor ipsum dictum
-  dui, sit amet iaculis enim elit sed magna. Nunc libero nunc, malesuada sit
-  amet, tincidunt at, pharetra ut, arcu.
-  
-  \bigskip
+    One of the possible extensions we could investigate is using user feedback
+    provided through a simple interface in order to enhance the recommendation
+    results. For example, there might be cases where the next proposed track
+    does not satisfy the user's preferences. Having a way to collect such
+    feedback could help the system fine tune music similarity data based on
+    triples, including the previous, the current and the next proposed tracks.
+    Though as Dieleman references on his post, this type of feedback tends to
+    be very noisy, thus we are not certain whether or not such a feature will
+    improve our results.
+    
+    \bigskip
 
-  \Subhead{Second Subsection}
+    \Subhead{}
 
-  Integer ante. Mauris tincidunt adipiscing mi. Donec sollicitudin, lacus quis
-  pellentesque placerat, quam elit pharetra lacus, sit amet placerat nisi quam
-  in lorem. Etiam id nulla a est vestibulum tempus. Nam et nisl non arcu
-  venenatis semper. Duis sed libero. Cras lectus. In semper urna in leo. Sed
-  mattis lacinia arcu. Phasellus ut metus. Phasellus mi dolor, condimentum ut,
-  ornare nec, tempus ac, mi. Integer ante sem, vestibulum in, gravida vel,
-  condimentum non, ipsum.
+    Integer ante. Mauris tincidunt adipiscing mi. Donec sollicitudin, lacus quis
+    pellentesque placerat, quam elit pharetra lacus, sit amet placerat nisi quam
+    in lorem. Etiam id nulla a est vestibulum tempus. Nam et nisl non arcu
+    venenatis semper. Duis sed libero. Cras lectus. In semper urna in leo. Sed
+    mattis lacinia arcu. Phasellus ut metus. Phasellus mi dolor, condimentum ut,
+    ornare nec, tempus ac, mi. Integer ante sem, vestibulum in, gravida vel,
+    condimentum non, ipsum.
 
-  \bigskip
-  \hrule
+    \bigskip
+    \hrule
   \end{textblock}
 
 
