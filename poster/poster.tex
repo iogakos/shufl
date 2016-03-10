@@ -32,6 +32,9 @@
 \usepackage{wrapfig,helvet}
 \usepackage{amsmath}
 
+% For using urls
+\usepackage{hyperref}
+
 % These colours are tried and tested for titles and headers. Don't
 % over use color!
 \usepackage{color}
@@ -160,12 +163,15 @@
     \hrule
   \end{textblock}
 
-  %----------------------------------------------------------------------%
-  %           Second column.                                             %
-  %----------------------------------------------------------------------%
+  %---------------------------------------------------------------------------%
+  %                                Second column.                             %
+  %---------------------------------------------------------------------------%
   \begin{textblock}{7}(8,2.4)
     \Head{Architecture}
     \sf
+
+    \Subhead{Overview}
+
     Our system needs to be able to suggest songs similar to that provided by
     the user, based only on its audio sample.
 
@@ -176,45 +182,29 @@
     using gensim Python toolkit on this dataset to produce latent vecotr
     representation of each song.
 
+    \begin{center}
+      \rotatebox{0}{\scalebox{1}{\includegraphics{clusters.eps}}}
+      \url{http://benanne.github.io/images/prentje\_nips.png}
+    \end{center}
+
+
     We will then build a Convolutional Neural Network taking frequency spectrum
     of an audio sample as input and outputing latent vector representation. The
     Network will be trained to minimize the error with the ground truth model.
 
-    \bigskip
-    \hrule
-  \end{textblock}
+	\bigskip
 
-  \begin{textblock}{7}(8,5.25)
+    \Subhead{Details}
 
-    \Head{Evaluation}
+    \begin{itemize}
+      \item Samplpes overlaping in time
+      \item To reduce number of possibe frequency values we will convert the 
+        frequency into mel scale
+    \end{itemize}
 
-    \sf
-    Of course, the principal reason for choosing \LaTeX\ is its ability with
-    equations:  
-    \[ 
-       U_\mathrm{doublet} = \frac{mg}{2\pi\mu a}\left( \int_0^\infty \left\{ 1
-           - \frac{2\sinh^2{s} - 2s^2}{\sinh{2s}+2s}\right\}\,\ds
-       \right)^{-1} \approx \frac{1.55mg}{6\pi\mu a}, \] 
-    but it's equally easy to include tables: 
-    \begin{center} 
-    \begin{tabular}{cccccccccccr}
-    \hline
-      && \multicolumn{2}{c}{$U_1$}  && \multicolumn{2}{c}{$U_2$} 
-      && \multicolumn{2}{c}{$U_3$} & $U_3$ \\ 
-    $L$ &&    MR   &   SD   &&   MR   &   SD   &&   MR    &   SD & error \\ 
-    \hline
-    2.01 &&0.65528 &0.64739 &&0.63461 &0.62691 &&0.00498 &0.00451 & 9\%\\ 
-    2.10 &&0.73857 &0.73126 &&0.59718 &0.58784 &&0.03517 &0.02570 &27\%\\ 
-    2.50 &&0.87765 &0.87482 &&0.49545 &0.48829 &&0.07393 &0.05853 &21\%\\ 
-    3.00 &&0.93905 &0.93806 &&0.41694 &0.41356 &&0.07824 &0.06970 &11\%\\ 
-    4.00 &&0.97964 &0.97945 &&0.31859 &0.31774 &&0.06925 &0.06639 & 4\%\\ 
-    6.00 &&0.99581 &0.99579 &&0.21586 &0.21575 &&0.05078 &0.05019 & 1\%\\ 
-    \hline
-    \end{tabular} 
-    \end{center}
-    and, of course, images:
     \begin{center}
-    \rotatebox{-90}{\scalebox{2.22}{\includegraphics{fig2.eps}}}
+      \rotatebox{0}{\scalebox{1}{\includegraphics{cnn.eps}}}
+      \url{http://benanne.github.io/images/spotify\_convnet.png}
     \end{center}
 
     \bigskip
