@@ -136,27 +136,6 @@
   \end{textblock}
 
   \begin{textblock}{7}(0,8.70)
-    \Head{Architecture}
-
-    \sf
-    \begin{itemize}
-      \item Build two models:
-      \begin{itemize}
-        \item Ground truth model based on collaborative filtering obtained from
-          MagnaTagATune dataset
-        \item Neural Network trained to minimize the error of latent
-          representation (output) with the ground truth model
-      \end{itemize}
-    \end{itemize}
-
-    \bigskip
-    \hrule
-  \end{textblock}
-
-  %----------------------------------------------------------------------%
-  %           Second column.                                             %
-  %----------------------------------------------------------------------%
-  \begin{textblock}{7}(8,2.4)
     \Head{Dataset}
     \sf
     In order to train the CNN, we are using the MagnaTagATune dataset, which
@@ -172,6 +151,30 @@
     similarity annotations in the form of triples where given a triple of songs
     (A, B, C), metrics of how many players have flagged the song A, B or C as
     most different from the others.
+
+    \bigskip
+    \hrule
+  \end{textblock}
+
+  %----------------------------------------------------------------------%
+  %           Second column.                                             %
+  %----------------------------------------------------------------------%
+  \begin{textblock}{7}(8,2.4)
+    \Head{Architecture}
+    \sf
+    Our system needs to be able to suggest songs similar to that provided by
+    the user, based only on its audio sample.
+
+    To achieve this goal we first build a ground truth model using 
+    MagnaTagATune dataset. Each song in the database is annotated by users with
+    multiple tags that we treat as "bag of words" meaning only the presence and
+    count of a tag matters and not its position. We will run word2vec algorithm
+    using gensim Python toolkit on this dataset to produce latent vecotr
+    representation of each song.
+
+    We will then build a Convolutional Neural Network taking frequency spectrum
+    of an audio sample as input and outputing latent vector representation. The
+    Network will be trained to minimize the error with the ground truth model.
 
     \bigskip
     \hrule
