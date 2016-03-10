@@ -8,6 +8,7 @@
 % 'psnup -w85cm -h119cm -f poster_from_dvips.ps poster_in_landscape.ps'
 
 \documentclass[a0]{a0poster}
+\pagenumbering{gobble}
 % You might find the 'draft' option to a0 poster useful if you have
 % lots of graphics, because they can take some time to process and
 % display. (\documentclass[a0,draft]{a0poster})
@@ -74,7 +75,7 @@
 }
 \makeatother
 
-\title{Shufl - Addressing cold start in music recommendation}
+\title{Addressing cold start in music recommendation}
 
 \author{Wiktor Grajkowski and Ioannis Gakos\\ University College London}
 
@@ -108,7 +109,7 @@
     collaborative filtering fall short in taking effective decisions for new
     and unpopular content. [1]
     \\ \\
-    Shufl's design is based on recent work of A\"{a}ron van den Oord et al. on
+    The design is based on recent work of A\"{a}ron van den Oord et al. on
     music recommendation [1] using deep CNNs and on Dieleman's post on the
     implementation details of such a CNN built during his internship at
     Spotify. Our main objective is to build a system that addresses the cold
@@ -124,7 +125,7 @@
     \hrule
   \end{textblock}
 
-  \begin{textblock}{7}(0,5.9)
+  \begin{textblock}{7}(0,6.0)
     \Head{The Problem}
     \sf 
     Traditional content recommendation systems rely on usage data to take
@@ -133,34 +134,42 @@
     However, collaborative filtering suffers from the cold start problem.
 
     Latent factor vectors are compact representations of the users'
-    preferences correlated with other characteristics of the items. However,
-    predicting these vectors for new music content only based on metadata such
-    as the artist's name is often impossible. Using audio content to predict
-    latent factor vectors can bridge the semantic gap between the
-    characteristics of an audio track and the user's preference.
+    preferences correlated with other characteristics of the items. Predicting
+    these vectors for new music content only based on metadata such as the
+    artist's name is often impossible. Using audio content to predict latent
+    factor vectors can bridge the semantic gap between the characteristics of
+    an audio track and the users' preferences. A\"{a}ron van den Oord et al.
+    converted existing usage data, which we already have in the magnatagatune
+    dataset, to the latent vector space using Weighted Matrix Factorization and
+    trained a CNN using these vectors to minimize the Mean Squeared Error of
+    the predicted latent vectors of audio samples. A visualization of their
+    qualititave evaluation is depicted in Figure 1.
     \bigskip
     \hrule
   \end{textblock}
 
-  \begin{textblock}{7}(0,8.70)
+  \begin{textblock}{7}(0,9)
     \Head{Dataset}
     \sf
     In order to train the CNN, we are using the MagnaTagATune dataset, which
     was made available by the Magnatune label for the research community. The
     data was collected using the TagATune game where users annotated audio
-    tracks with audio relevant tags.
+    tracks with audio relevant tags. We will use audio annotations to obtain
+    latent factor vectors and use these vectors as ground truth data to
+    minimize the MSE of the predictions. We will use compressed mel-spectograms
+    of the audio samples to form compressed time-frequency representations and
+    use them to train our CNN.
     \\ \\
     The dataset consists of approximately 26,000 of 29 seconds music clips
     encoded in 16 kHz, 32kbps, mono mp3, generously contributed by John
     Buckman, the founder of every MIR researcher's favorite label Magnatune.
-    Each of them annotated with a combination of 188 tags such as "orchestral",
+    Each of them is annotated with a combination of 188 tags such as "orchestral",
     "orchestra", "punk", "slow", "blues", "rock" etc. It also contains music
     similarity annotations in the form of triples where given a triple of songs
     (A, B, C), metrics of how many players have flagged the song A, B or C as
     most different from the others.
 
     \bigskip
-    \hrule
   \end{textblock}
 
   %---------------------------------------------------------------------------%
@@ -182,10 +191,17 @@
     using gensim Python toolkit on this dataset to produce latent vecotr
     representation of each song.
 
+    \hspace*{1cm}
     \begin{center}
+      \begin{figure}
+      \centering
       \rotatebox{0}{\scalebox{1}{\includegraphics{clusters.eps}}}
-      \url{http://benanne.github.io/images/prentje\_nips.png}
+      \caption{Visualization of the distribution of predicted usage patterns,
+        using latent factors predicted from audio (
+        \url{http://benanne.github.io/images/prentje\_nips.png})}
+      \end{figure}
     \end{center}
+    \hspace*{1cm}
 
 
     We will then build a Convolutional Neural Network taking frequency spectrum
@@ -203,8 +219,10 @@
     \end{itemize}
 
     \begin{center}
-      \rotatebox{0}{\scalebox{1}{\includegraphics{cnn.eps}}}
-      \url{http://benanne.github.io/images/spotify\_convnet.png}
+      \begin{figure}
+        \rotatebox{0}{\scalebox{1}{\includegraphics{cnn.eps}}}
+        \caption{ \url{http://benanne.github.io/images/spotify\_convnet.png}}
+      \end{figure}
     \end{center}
 
     \bigskip
@@ -227,7 +245,7 @@
     does not satisfy the user's preferences. Having a way to collect such
     feedback could help the system fine tune music similarity data based on
     triples, including the previous, the current and the next proposed tracks.
-    Though as Dieleman references on his post, this type of feedback tends to
+    Though, as Dieleman references on his post, this type of feedback tends to
     be very noisy, thus we are not certain whether or not such a feature will
     improve our results.
     
@@ -248,49 +266,23 @@
     \hrule
   \end{textblock}
 
-
   \begin{textblock}{7}(16,6.85)
 
   \Head{Discussion and Conclusions}
 
   \sf
-  Etiam sit amet nisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
-  Phasellus pharetra lacus. Aliquam erat volutpat. Donec leo. Mauris dapibus,
-  magna sed hendrerit volutpat, massa magna euismod metus, vel gravida purus
-  odio eget neque. Proin nibh turpis, commodo at, viverra sed, auctor vel,
-  turpis. Mauris massa lacus, malesuada at, consectetuer at, condimentum non,
-  nibh. Sed laoreet, lorem non tristique sodales, mauris nisi molestie dolor,
-  ac volutpat nisl augue id nibh. Mauris orci. Donec non lacus. Duis ut arcu.
-  Aliquam sed lacus eget dui sollicitudin pellentesque. Nunc lacus nisi, semper
-  nec, pellentesque non, dapibus sollicitudin, metus. Aenean ac enim et est
-  sollicitudin ultricies. Integer vitae magna vitae velit condimentum dapibus.
-  Aenean nec sem ut massa condimentum faucibus. 
-
-  Proin dignissim nunc in nulla. Vivamus non leo. Nulla ultrices tempor dui.
-  Curabitur nec metus. Aliquam sed libero. Cras orci odio, molestie a, suscipit
-  in, placerat vel, nunc. Vestibulum congue, nunc in faucibus scelerisque, ante
-  tortor dapibus nibh, eu tristique diam urna ac magna. Proin cursus. Morbi
-  quam ligula, fermentum vel, dapibus sit amet, euismod nec, justo. Suspendisse
-  potenti. Nulla eu elit. Pellentesque quam est, pretium ac, suscipit sed,
-  viverra id, sapien.
-  Donec tempor semper tortor. Nunc vulputate. Aliquam vitae metus ut sem
-  euismod accumsan. Duis tincidunt lacus sed ipsum. Class aptent taciti
-  sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.
-  Quisque nec nisl at erat ornare tempus. Etiam eros odio, ultricies non,
-  hendrerit et, vestibulum in, felis. Vivamus gravida. 
-
-  \begin{itemize}
-    \item First concluding point; we expected this to be so because of the
-      contruction of the argument and blah. 
-    \item Second concluding point: this one is counterintuitive but we can
-      justify it by reference to the extended discussion above.
-    \item Third and \textcolor{Red}{most important concluding point}: this iss
-       the one we're excited about.
-  \end{itemize}
-
-  \vspace*{4mm} % Sometimes you will have to fudge the final spacing.
+  Being able to classify music in the latent vector space without having usage
+  data, can help companies in the industry of digital music distribution take
+  more sophisticated decisions for new audio content. Having Dieleman's
+  prototype description will help us make comparisons based on the evaluation
+  results of both systems, for example concerning the granularity of the
+  filters learnt. We expect the problem to be challenging enough, especially
+  when it comes on adjusting the overlapping sample in various time frame sizes
+  and deciding on the exact CNN layer architecture, for example how many fully
+  connected layers does our model need.
+  
+  %\vspace*{4mm} % Sometimes you will have to fudge the final spacing.
   \bigskip
-  \hrule
   \end{textblock}
 
   %----------------------------------------------------------------------%
