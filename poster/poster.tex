@@ -71,7 +71,7 @@
 }
 \makeatother
 
-\title{Shufl - addressing cold start in music recommendation}
+\title{Shufl - Addressing cold start in music recommendation}
 
 \author{Wiktor Grajkowski and Ioannis Gakos\\ University College London}
 
@@ -103,10 +103,10 @@
     relevant problem whose solution could radically improve users' experience.
     However, in the absence of usage data, existing methods such as
     collaborative filtering fall short in taking effective decisions for new
-    and unpopular music content. [1]
+    and unpopular content. [1]
     \\ \\
-    Shufl's design is based on recent work of Sander Dieleman et al. on music
-    recommendation [1] using deep CNNs and on Dieleman's post on the
+    Shufl's design is based on recent work of A\"{a}ron van den Oord et al. on
+    music recommendation [1] using deep CNNs and on Dieleman's post on the
     implementation details of such a CNN built during his internship at
     Spotify. Our main objective is to build a system that addresses the cold
     start problem for both new users and music content. Users give as sole
@@ -123,14 +123,18 @@
 
   \begin{textblock}{7}(0,5.9)
     \Head{The Problem}
-
     \sf 
-    It is worth fiddling around a bit with positioning of the text blocks to
-    get the spacing even. I like a vertical gap of about 0.4 ``block units''
-    between the horizontal bar at the end of one block and the beginning of the
-    next. There are contruction lines at the end of the \TeX\ file to help with
-    this.
+    Traditional content recommendation systems rely on usage data to take
+    decisions. Behavior patterns between users, are used by collaborative
+    filtering methods to make recommendations on various type of contents.
+    However, collaborative filtering suffers from the cold start problem.
 
+    Latent factor vectors are compact representations of the users'
+    preferences correlated with other characteristics of the items. However,
+    predicting these vectors for new music content only based on metadata such
+    as the artist's name is often impossible. Using audio content to predict
+    latent factor vectors can bridge the semantic gap between the
+    characteristics of an audio track and the user's preference.
     \bigskip
     \hrule
   \end{textblock}
