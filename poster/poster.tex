@@ -36,6 +36,9 @@
 % For using urls
 \usepackage{hyperref}
 
+% For citations
+\usepackage{cite}
+
 % These colours are tried and tested for titles and headers. Don't
 % over use color!
 \usepackage{color}
@@ -111,15 +114,15 @@
     \\ \\
     The design is based on recent work of A\"{a}ron van den Oord et al. on
     music recommendation [1] using deep CNNs and on Dieleman's post on the
-    implementation details of such a CNN built during his internship at
+    implementation details of such CNN built during his internship at
     Spotify. Our main objective is to build a system that addresses the cold
-    start problem for both new users and music content. Users give as sole
-    input a single preferred track based on which a shuffled playist with
-    relevant music content is generated. Newly imported music content is
-    classified based on its frequency spectrum and the already existing ground
-    truth data, without using any usage related feedback. In order to train
-    the CNN model, the MagnaTagATune open dataset will be used, which contains
-    26,000 of 29 seconds user annotated audio samples.
+    start problem for both new users and music content. Users give a single
+    preferred track as input, based on which a shuffled playist with relevant
+    music content is generated. Newly imported music content is classified
+    based on its frequency spectrum and the already existing ground truth data,
+    without using any usage related feedback. In order to train the CNN model,
+    the MagnaTagATune open dataset will be used, which contains 26,000 user
+    annotated audio samples.
 
     \bigskip
     \hrule
@@ -128,37 +131,47 @@
   \begin{textblock}{7}(0,6.0)
     \Head{The Problem}
     \sf 
-    Traditional content recommendation systems rely on usage data to take
+    Traditional content recommendation systems rely on user usage data to make
     decisions. Behavior patterns between users, are used by collaborative
-    filtering methods to make recommendations on various type of contents.
+    filtering methods to make recommendations about various types of content.
     However, collaborative filtering suffers from the cold start problem.
 
     Latent factor vectors are compact representations of the users'
     preferences correlated with other characteristics of the items. Predicting
-    these vectors for new music content only based on metadata such as the
+    these vectors for new music content based only on metadata such as the
     artist's name is often impossible. Using audio content to predict latent
     factor vectors can bridge the semantic gap between the characteristics of
     an audio track and the users' preferences. A\"{a}ron van den Oord et al.
-    converted existing usage data, which we already have in the magnatagatune
-    dataset, to the latent vector space using Weighted Matrix Factorization and
-    trained a CNN using these vectors to minimize the Mean Squeared Error of
-    the predicted latent vectors of audio samples. A visualization of their
-    qualititave evaluation is depicted in Figure 1.
-    \bigskip
-    \hrule
+    converted existing usage data, present in the MagnaTagATune dataset, to the
+    latent vector space using Weighted Matrix Factorization and trained a CNN
+    using these vectors to minimize the Mean Squeared Error of the predicted
+    latent vectors of audio samples. Visualization of their qualititave 
+    evaluation is depicted in Figure 1.
+    
+    \hspace*{1cm}
+    \begin{center}
+      \begin{figure}
+      \centering
+      \rotatebox{0}{\scalebox{1}{\includegraphics{clusters.eps}}}
+      \caption{Visualization of the artist classification using latent factors
+        predicted from audio (
+        \url{http://benanne.github.io/images/prentje\_nips.png})}
+      \end{figure}
+    \end{center}
+    \hspace*{1cm}
+
   \end{textblock}
 
-  \begin{textblock}{7}(0,9)
+  %---------------------------------------------------------------------------%
+  %                                Second column.                             %
+  %---------------------------------------------------------------------------%
+  \begin{textblock}{7}(8,2.4)
     \Head{Dataset}
     \sf
     In order to train the CNN, we are using the MagnaTagATune dataset, which
     was made available by the Magnatune label for the research community. The
     data was collected using the TagATune game where users annotated audio
-    tracks with audio relevant tags. We will use audio annotations to obtain
-    latent factor vectors and use these vectors as ground truth data to
-    minimize the MSE of the predictions. We will use compressed mel-spectograms
-    of the audio samples to form compressed time-frequency representations and
-    use them to train our CNN.
+    tracks with audio relevant tags.
     \\ \\
     The dataset consists of approximately 26,000 of 29 seconds music clips
     encoded in 16 kHz, 32kbps, mono mp3, generously contributed by John
@@ -170,12 +183,10 @@
     most different from the others.
 
     \bigskip
+    \hrule
   \end{textblock}
 
-  %---------------------------------------------------------------------------%
-  %                                Second column.                             %
-  %---------------------------------------------------------------------------%
-  \begin{textblock}{7}(8,2.4)
+  \begin{textblock}{7}(8,5.1)
     \Head{Architecture}
     \sf
 
@@ -187,46 +198,35 @@
     To achieve this goal we first build a ground truth model using 
     MagnaTagATune dataset. Each song in the database is annotated by users with
     multiple tags that we treat as "bag of words" meaning only the presence and
-    count of a tag matters and not its position. We will run word2vec algorithm
+    count of a tag matters and but its position. We will run word2vec algorithm
     using gensim Python toolkit on this dataset to produce latent vecotr
     representation of each song.
 
-    \hspace*{1cm}
-    \begin{center}
-      \begin{figure}
-      \centering
-      \rotatebox{0}{\scalebox{1}{\includegraphics{clusters.eps}}}
-      \caption{Visualization of the distribution of predicted usage patterns,
-        using latent factors predicted from audio (
-        \url{http://benanne.github.io/images/prentje\_nips.png})}
-      \end{figure}
-    \end{center}
-    \hspace*{1cm}
-
-
     We will then build a Convolutional Neural Network taking frequency spectrum
     of an audio sample as input and outputing latent vector representation. The
-    Network will be trained to minimize the error with the ground truth model.
+    Network will be trained to minimize the MSE of the predictions with the
+    ground truth model.
 
 	\bigskip
 
     \Subhead{Details}
 
-    \begin{itemize}
-      \item Samplpes overlaping in time
-      \item To reduce number of possibe frequency values we will convert the 
-        frequency into mel scale
-    \end{itemize}
+    We will use compressed mel-spectograms of the audio samples to form
+    compressed time-frequency representations and use them to train our CNN.
+    The samples will overlap in time. We will experiment with the depth and
+    size of the network. Figure 2 shows possible configuration with three
+    convolutional layers and three fully connected layers.
 
     \begin{center}
       \begin{figure}
         \rotatebox{0}{\scalebox{1}{\includegraphics{cnn.eps}}}
-        \caption{ \url{http://benanne.github.io/images/spotify\_convnet.png}}
+        \caption{
+          \url{http://benanne.github.io/images/spotify\_convnet.png}}
       \end{figure}
     \end{center}
 
     \bigskip
-    \hrule
+
   \end{textblock}
 
   %----------------------------------------------------------------------%
@@ -268,21 +268,35 @@
 
   \begin{textblock}{7}(16,6.85)
 
-  \Head{Discussion and Conclusions}
+  	\Head{Discussion and Conclusions}
+	\sf
 
-  \sf
-  Being able to classify music in the latent vector space without having usage
-  data, can help companies in the industry of digital music distribution take
-  more sophisticated decisions for new audio content. Having Dieleman's
-  prototype description will help us make comparisons based on the evaluation
-  results of both systems, for example concerning the granularity of the
-  filters learnt. We expect the problem to be challenging enough, especially
-  when it comes on adjusting the overlapping samples in various time frame
-  sizes and deciding on the exact CNN layer architecture, for example how many
-  fully connected layers does our model need.
+	Being able to classify music in the latent vector space without having usage
+	data, can help companies in the industry of digital music distribution take
+	more sophisticated decisions for new audio content. Having Dieleman's
+	prototype description will help us make comparisons based on the evaluation
+	results of both systems, for example concerning the granularity of the
+	filters learnt. We expect the problem to be challenging enough, especially
+	when it comes on adjusting the overlapping samples in various time frame
+	sizes and deciding on the exact CNN layer architecture, for example how
+	many fully connected layers does our model need.
   
-  %\vspace*{4mm} % Sometimes you will have to fudge the final spacing.
+	%\vspace*{4mm} % Sometimes you will have to fudge the final spacing.
+	\bigskip
+	\hrule
+  \end{textblock}
+
+  \begin{textblock}{7}(16,9.25)
+
+  \Head{References}
+  \sf
+
+  [1] Deep content-based music recommendation, Aäron van den Oord, Sander
+    Dieleman and Benjamin Schrauwen, NIPS 2013.
+
+  
   \bigskip
+
   \end{textblock}
 
   %----------------------------------------------------------------------%
@@ -309,4 +323,8 @@
   %\begin{textblock}{1.5}(15,6.45)\rule{\textwidth}{0.1mm}\end{textblock}
   % Same purpose but in the third column.
 
+%import bibliography TODO: this doesnt work
+\cite{*}
+\bibliography{references}{}
+\bibliographystyle{plain}
 \end{document}

@@ -1,4 +1,5 @@
 LATEX=latex
+BIBTEX=bibtex
 
 DVIPS=dvips
 DVIPSFLAGS= -Ppdf 
@@ -16,6 +17,9 @@ poster.ps : poster.dvi
 	${DVIPS} ${DVIPSFLAGS} -o poster.ps poster.dvi 
 
 poster.dvi : poster.tex
+	${LATEX} poster
+	${BIBTEX} poster
+	${LATEX} poster
 	${LATEX} poster
 
 clean :

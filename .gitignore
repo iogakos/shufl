@@ -6,3 +6,5 @@
 *.ps
 *.pdf
 *.out
+*.bbl
+*.blg
