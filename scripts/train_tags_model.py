@@ -1,17 +1,23 @@
-# as taken from http://rare-technologies.com/word2vec-tutorial/
+# credits for this to http://rare-technologies.com/doc2vec-tutorial/
 class MagnaTags(object):
-  def __init__(self, dirname):
-    self.dirname = os.path.abspath(dirname)
+  def __init__(self, filename):
+    self.filename = filename
 
   def __iter__(self):
-    for fname in os.listdir(self.dirname):
-      for line in open(os.path.join(self.dirname, fname)):
-        yield line.split()
+    for line in open(self.filename):
+      tags = line.split()
+      yield gensim.models.doc2vec.LabeledSentence(words=tags[1:], tags=['CLIP_%s' % tags[0]])
 
 import gensim
 import os
 
-tags = MagnaTags('data') # a memory-friendly iterator
+tags = MagnaTags('data/tags') # a memory-friendly iterator
 #bigram_transformer = gensim.models.Phrases(tags)
 #model = gensim.models.Word2Vec(bigram_transformer[tags], size=100, min_count = 1)
-model = gensim.models.Word2Vec(tags, size=100, min_count=1)
+model = gensim.models.Doc2Vec(alpha=0.025, min_alpha=0.025, size = 40)
+model.build_vocab(tags)
+for epoch in range(10):
+  model.train(tags)
+  model.alpha -= 0.002  # decrease the learning rate
+  model.min_alpha = model.alpha  # fix the learning rate, no decay
+
