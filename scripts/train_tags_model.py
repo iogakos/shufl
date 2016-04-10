@@ -11,13 +11,20 @@ class MagnaTags(object):
 import gensim
 import os
 
-tags = MagnaTags('data/tags') # a memory-friendly iterator
-#bigram_transformer = gensim.models.Phrases(tags)
-#model = gensim.models.Word2Vec(bigram_transformer[tags], size=100, min_count = 1)
-model = gensim.models.Doc2Vec(alpha=0.025, min_alpha=0.025, size = 40)
-model.build_vocab(tags)
-for epoch in range(10):
-  model.train(tags)
-  model.alpha -= 0.002  # decrease the learning rate
-  model.min_alpha = model.alpha  # fix the learning rate, no decay
+model_path = './data/d2vmodel.doc2vec'
 
+try:
+    model = gensim.models.Doc2Vec.load(model_path)
+except IOError:
+	tags = MagnaTags('data/tags') # a memory-friendly iterator
+	#bigram_transformer = gensim.models.Phrases(tags)
+	#model = gensim.models.Word2Vec(bigram_transformer[tags], size=100, min_count = 1)
+	model = gensim.models.Doc2Vec(alpha=0.025, min_alpha=0.025, size = 40)
+	model.build_vocab(tags)
+	for epoch in range(10):
+	  model.train(tags)
+	  model.alpha -= 0.002  # decrease the learning rate
+	  model.min_alpha = model.alpha  # fix the learning rate, no decay
+
+	#save the model
+	model.save(model_path)
