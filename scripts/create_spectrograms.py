@@ -15,6 +15,8 @@ hop = stft_window / 4
 
 #create h5py file for storing spectrogram arrays
 spectrograms_file = h5py.File('data/spectrograms.hdf5','a')
+#debug: compression tests
+# spectrograms_file_comp = h5py.File('data/spectrograms_comp.hdf5','a')
 
 #create clip_id <-> filename mappings
 for line in open(idToPath_file):
@@ -22,6 +24,9 @@ for line in open(idToPath_file):
   idToPath[tags[0]] = tags[1]
 
 total_clips = 25863
+
+#debug: compression tests
+test = 0
 
 # generate spectogram for each clip with non empty tags
 with open(tags_file, "r") as f:
@@ -39,17 +44,25 @@ with open(tags_file, "r") as f:
 		else:
 			if tags[0] not in spectrograms_file:
 				S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window, hop_length=hop)
-				dset = spectrograms_file.create_dataset(tags[0], data=S, compression="gzip", compression_opts=9)
+				#this gives us a bit over 10% compression
+				# spec = spectrograms_file.create_dataset(tags[0], chunks=(128,1214), shuffle=True, data=S, compression="gzip", compression_opts=9)
+				#limiting precision to 10 decimal points gives ~50% compression, 8 decimals 65%
+				spectrograms_file.create_dataset(tags[0], chunks=(128,1214), shuffle=True, scaleoffset=8, data=S, compression="gzip", compression_opts=9)
+				#arr = spectrograms_file[tags[0]][()]
+
+				#debug: compression tests
+				# test+=1;
+				# if test == 100:
+				# 	break;
+
 	  if index%260 == 0:
 	  	print str(index*100/total_clips) + "%"
 
-
-
-spectrograms_file.close()
-
 #generate and display the spectrogram plot
-# librosa.display.specshow(librosa.logamplitude(S,ref_power=np.max),sr=sr, hop_length=hop, y_axis='mel', fmax=sr/2,x_axis='time')
+# librosa.display.specshow(librosa.logamplitude(arr,ref_power=np.max),sr=sr, hop_length=hop, y_axis='mel', fmax=sr/2,x_axis='time')
 # plt.colorbar(format='%+2.0f dB')
 # plt.title('Mel spectrogram')
 # plt.tight_layout()
 # plt.show()
+
+spectrograms_file.close()
