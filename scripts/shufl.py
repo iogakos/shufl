@@ -85,6 +85,8 @@ def build_cnn(input_var=None):
     # override Theano's choice of which implementation to use; for details
     # please see http://lasagne.readthedocs.org/en/latest/user/tutorial.html.
 
+    y = lasagne.layers.get_output(l_out)
+
     # Max-pooling layer of factor 2 in both dimensions:
     network = lasagne.layers.MaxPool2DLayer(network, pool_size=(4, 4))
 
@@ -133,6 +135,78 @@ def build_cnn(input_var=None):
 
     return network
 
+
+# TODO: i think this is more like the bennanes network
+def build_cnn_b(input_var=None):
+    # Create a CNN following benanne's network: http://benanne.github.io/2014/08/05/spotify-cnns.html
+
+    # Input layer - the spectrogram
+    network = lasagne.layers.InputLayer(shape=(None, 1, 128, 911),
+                                        input_var=input_var)
+
+    # Convolutional layer with 256 filters of size 4 (time frames) (x128 or should it be 1?)
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=256, filter_size=(128,4),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform())
+    # Expert note: Lasagne provides alternative convolutional layers that
+    # override Theano's choice of which implementation to use; for details
+    # please see http://lasagne.readthedocs.org/en/latest/user/tutorial.html.
+
+
+    # Max-pooling layer of factor 4 in the time dimention:
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 4)) 
+
+    # Another convolution with 256 128x4 kernels, and another 1x2 pooling
+    # (in time domain):
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=256, filter_size=(128, 4),
+            nonlinearity=lasagne.nonlinearities.rectify)
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 2))
+
+    # Another convolution with 256 128x4 kernels, and another 1x2 pooling
+    # (in time domain):
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=256, filter_size=(128, 4),
+            nonlinearity=lasagne.nonlinearities.rectify)
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 2))
+
+    # Another convolution with 512 128x4 kernels:
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=512, filter_size=(128, 4),
+            nonlinearity=lasagne.nonlinearities.rectify)
+
+    #TODO: need to figure out what now
+
+    # A fully-connected layer of 256 units with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=256,
+            nonlinearity=lasagne.nonlinearities.rectify)
+
+    network = lasagne.layers.GlobalPoolLayer(network)
+
+    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=1024,
+            nonlinearity=lasagne.nonlinearities.softmax)
+
+    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=1024,
+            nonlinearity=lasagne.nonlinearities.softmax)
+
+    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=188,
+            nonlinearity=lasagne.nonlinearities.softmax)
+
+    return network
+
+
 # ############################## Main program ################################
 # Everything else will be handled in our main program now. We could pull out
 # more functions to better separate the code, but it wouldn't make it any
@@ -147,8 +221,8 @@ def main(model='mlp', num_epochs=500):
     input_var = T.tensor4('inputs')
     target_var = T.ivector('targets')
 #
-#    print("Building model and compiling functions...")
-#    network = build_cnn(input_var)
+   print("Building model and compiling functions...")
+   network = build_cnn(input_var)
 
 
 if __name__ == '__main__':
