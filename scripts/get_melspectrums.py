@@ -11,6 +11,7 @@ import sys
 # overlapping window
 
 magna_dir = 'magna'
+mel_pickles = 'mel.pickle'
 
 dir_len = len(os.listdir(magna_dir))
 dir_count = 1
@@ -24,7 +25,8 @@ for dirpath, directories, _ in os.walk(magna_dir):
     file_count = 0
     for file in filenames:
       y, sr = librosa.load(os.path.join(subdir, file), sr = 16000)
-      mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr)
+      mel_spectrogram = librosa.feature.melspectrogram(
+          y=y, sr=sr, fmax = sr / 2)
       file_count += 1
 
       print '\r', 'done: ', file_count, '/', len(filenames), 
