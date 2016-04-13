@@ -29,8 +29,8 @@ def load_dataset():
             pass
 
     def load_mel_specs(filename):
-        data = np.ndarray(21642 * 128 * 911, np.float64)
-        data = data.reshape(-1, 1, 128, 911)
+        data = np.ndarray(21642 * 911 * 128, np.float64)
+        data = data.reshape(-1, 1, 911, 128)
 
         with open(filename) as f:
             i = 0
@@ -141,12 +141,12 @@ def build_cnn_b(input_var=None):
     # Create a CNN following benanne's network: http://benanne.github.io/2014/08/05/spotify-cnns.html
 
     # Input layer - the spectrogram
-    network = lasagne.layers.InputLayer(shape=(None, 1, 128, 911),
+    network = lasagne.layers.InputLayer(shape=(None, 1, 911, 128),
                                         input_var=input_var)
 
     # Convolutional layer with 256 filters of size 4 (time frames) (x128 or should it be 1?)
     network = lasagne.layers.Conv2DLayer(
-            network, num_filters=256, filter_size=(128,4),
+            network, num_filters=256, filter_size=(4, 128),
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
     # Expert note: Lasagne provides alternative convolutional layers that
@@ -155,53 +155,54 @@ def build_cnn_b(input_var=None):
 
 
     # Max-pooling layer of factor 4 in the time dimention:
-    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 4)) 
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(4, 1)) 
 
-    # Another convolution with 256 128x4 kernels, and another 1x2 pooling
+    # Another convolution with 256 kernels of size 4 in time dimension, and 2x1 pooling
     # (in time domain):
     network = lasagne.layers.Conv2DLayer(
-            network, num_filters=256, filter_size=(128, 4),
+            network, num_filters=256, filter_size=(4, 1),
             nonlinearity=lasagne.nonlinearities.rectify)
-    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 2))
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 1))
 
-    # Another convolution with 256 128x4 kernels, and another 1x2 pooling
+    # Another convolution with 256 4x1 kernels, and another 2x1 pooling
     # (in time domain):
     network = lasagne.layers.Conv2DLayer(
-            network, num_filters=256, filter_size=(128, 4),
+            network, num_filters=256, filter_size=(4, 1),
             nonlinearity=lasagne.nonlinearities.rectify)
-    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(1, 2))
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 1))
 
-    # Another convolution with 512 128x4 kernels:
+    # Another convolution with 512 4x1 kernels:
     network = lasagne.layers.Conv2DLayer(
-            network, num_filters=512, filter_size=(128, 4),
+            network, num_filters=512, filter_size=(4, 1),
             nonlinearity=lasagne.nonlinearities.rectify)
 
     #TODO: need to figure out what now
 
-    # A fully-connected layer of 256 units with 50% dropout on its inputs:
+    #extract mean and max from the last set of filters
+    mean = lasagne.layers.GlobalPoolLayer(network, pool_function=theano.tensor.mean)
+    maxx = lasagne.layers.GlobalPoolLayer(network, pool_function=theano.tensor.max)
+    #l2 = lasagne.regularization.l2(network)
+
+    #concatinate teh globally pooled layers
+    concat = lasagne.layers.ConcatLayer([mean, maxx])
+
+
+    # 2048-unit fully connected layer with 50% dropout on its inputs:
     network = lasagne.layers.DenseLayer(
-            lasagne.layers.dropout(network, p=.5),
-            num_units=256,
+            lasagne.layers.dropout(concat, p=.5),
+            num_units=2048,
             nonlinearity=lasagne.nonlinearities.rectify)
 
-    network = lasagne.layers.GlobalPoolLayer(network)
-
-    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    # 2048-unit fully connected layer with 50% dropout on its inputs:
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(network, p=.5),
-            num_units=1024,
-            nonlinearity=lasagne.nonlinearities.softmax)
+            num_units=2048,
+            nonlinearity=lasagne.nonlinearities.rectify)
 
-    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    # And, finally, the 40-unit output layer with 50% dropout on its inputs:
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(network, p=.5),
-            num_units=1024,
-            nonlinearity=lasagne.nonlinearities.softmax)
-
-    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
-    network = lasagne.layers.DenseLayer(
-            lasagne.layers.dropout(network, p=.5),
-            num_units=188,
+            num_units=40,
             nonlinearity=lasagne.nonlinearities.softmax)
 
     return network
@@ -220,9 +221,9 @@ def main(model='mlp', num_epochs=500):
     # Prepare Theano variables for inputs and targets
     input_var = T.tensor4('inputs')
     target_var = T.ivector('targets')
-#
-   print("Building model and compiling functions...")
-   network = build_cnn(input_var)
+    
+    print("Building model and compiling functions...")
+    network = build_cnn_b(input_var)
 
 
 if __name__ == '__main__':

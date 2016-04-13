@@ -43,6 +43,9 @@ for row in tags_list[1:]:
             y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
             hop_length=hop)
 
+    #flip frequency and time axis
+    spectrum.transpose()
+
     # Write nparrays in pickle files. For each file, its tag vector and mel
     # spec nparrays MUST be in the same line number on the train files
     pickle.dump(model.docvecs[clip_id], tags_pickle_file)
