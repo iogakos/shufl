@@ -29,7 +29,7 @@ def load_dataset():
             pass
 
     def load_mel_specs(filename):
-        data = np.ndarray(21642 * 599 * 128, np.float64)
+        data = np.ndarray(1000 * 599 * 128, np.float16)
         data = data.reshape(-1, 1, 599, 128)
 
         with open(filename) as f:
@@ -41,7 +41,7 @@ def load_dataset():
         return data
 
     def load_tag_vectors(filename):
-        data = np.ndarray((21642, 40), np.float32)
+        data = np.ndarray((1000, 40), np.float16)
         with open(filename) as f:
             i = 0
             for tag_vector in pickleLoader(f):
@@ -58,19 +58,21 @@ def load_dataset():
 #    y_test = load_mnist_labels('t10k-labels-idx1-ubyte.gz')
 #
     # We reserve the last 1000 training examples for validation.
-    X_train, X_val = X_train[:-1000], X_train[-1000:]
-    y_train, y_val = y_train[:-1000], y_train[-1000:]
+    X_test = X_train[900:1000]
+    y_test = y_train[900:1000]
+    X_train, X_val = X_train[:800], X_train[800:900]
+    y_train, y_val = y_train[:800], y_train[800:900]
 
     # We just return all the arrays in order, as expected in main().
     # (It doesn't matter how we do this as long as we can read them again.)
-    return X_train, y_train, X_val, y_val
+    return X_train, y_train, X_val, y_val, X_test, y_test
 
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
     # Create a CNN following benanne's network: http://benanne.github.io/2014/08/05/spotify-cnns.html
 
     # Input layer - the spectrogram
-    network = lasagne.layers.InputLayer(shape=(None, 1, 911, 128),
+    network = lasagne.layers.InputLayer(shape=(None, 1, 599, 128),
                                         input_var=input_var)
 
     # Convolutional layer with 256 filters of size 4 (time frames) (x128 or should it be 1?)
@@ -167,7 +169,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
 def main(num_epochs=10):
     # Load the dataset
     print("Loading data...")
-    X_train, y_train, X_val, y_val = load_dataset()
+    X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
 
     # Prepare Theano variables for inputs and targets
     input_var = T.tensor4('inputs')
@@ -198,7 +200,7 @@ def main(num_epochs=10):
     test_loss = test_loss.mean()
 
     # As a bonus, also create an expression for the classification accuracy:
-    test_acc = test_loss
+    test_acc = 1 - test_loss
 
 
     # Compile a function performing a training step on a mini-batch (by giving
@@ -218,10 +220,11 @@ def main(num_epochs=10):
         train_err = 0
         train_batches = 0
         start_time = time.time()
-        for batch in iterate_minibatches(X_train, y_train, 50, shuffle=True):
+        for batch in iterate_minibatches(X_train, y_train, 50, shuffle=False):
             inputs, targets = batch
             train_err += train_fn(inputs, targets)
             train_batches += 1
+            print(train_err)
 
         # And a full pass over the validation data:
         val_err = 0
@@ -247,7 +250,7 @@ def main(num_epochs=10):
     test_err = 0
     test_acc = 0
     test_batches = 0
-    for batch in iterate_minibatches(X_test, y_test, 50, shuffle=False):
+    for batch in iterate_minibatches(X_test, y_test, 10, shuffle=False):
         inputs, targets = batch
         err, acc = val_fn(inputs, targets)
         test_err += err
@@ -257,8 +260,6 @@ def main(num_epochs=10):
     print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
     print("  test accuracy:\t\t{:.2f} %".format(
         test_acc / test_batches * 100))
-
-
 
 if __name__ == '__main__':
     if ('--help' in sys.argv) or ('-h' in sys.argv):
