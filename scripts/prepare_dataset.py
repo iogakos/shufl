@@ -67,7 +67,7 @@ for row in tags_list[1:]:
 
     count += 1
     print '\r', 'done: ', count, '/', model.docvecs.count, \
-            '(', count / model.docvecs.count, '%)',
+            '(', count * 100 / model.docvecs.count, '%)',
 
     if count == 1000: break
 
