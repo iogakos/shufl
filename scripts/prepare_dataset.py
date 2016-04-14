@@ -30,11 +30,11 @@ reader = csv.reader(tags_csv_file, delimiter='\t')
 tags_list = list(reader)
 
 # prepare tags pickle file
-tags_pickle_file = open(tags_pickle_path, 'a')
-mels_pickle_file = open(mels_pickle_path, 'a')
+tags_pickle_file = open(tags_pickle_path, 'w')
+mels_pickle_file = open(mels_pickle_path, 'w')
 
-tags_test_pickle_file = open(tags_test_pickle_path, 'a')
-mels_test_pickle_file = open(mels_test_pickle_path, 'a')
+tags_test_pickle_file = open(tags_test_pickle_path, 'w')
+mels_test_pickle_file = open(mels_test_pickle_path, 'w')
 
 # load tags model
 model = gensim.models.Doc2Vec.load(model_path)
