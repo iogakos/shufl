@@ -14,6 +14,18 @@ import lasagne
 
 import pickle
 
+mels_path = 'data/mels.pickle'
+tags_path = 'data/tags.pickle'
+mels_test_path = 'data/mels-test.pickle'
+tags_test_path = 'data/tags-test.pickle'
+
+# uncomment for running on aws
+# data_root = '/mnt/'
+# mels_path = data_root + mels_path
+# tags_path = data_root + tags_path
+# mels_test_path = data_root + mels_test_path
+# tags_test_path = data_root + tags_test_path
+
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
     # Create a CNN following benanne's network: http://benanne.github.io/2014/08/05/spotify-cnns.html
@@ -173,8 +185,8 @@ def main(num_epochs=10):
     for epoch in range(num_epochs):
         # In each epoch, we do a full pass over the training data:
 
-        mels_f = open('data/mels.pickle')
-        tags_f = open('data/tags.pickle')
+        mels_f = open(mels_path)
+        tags_f = open(tags_path)
 
         train_err = 0
         train_batches = 0
@@ -205,9 +217,8 @@ def main(num_epochs=10):
         mels_f.close()
         tags_f.close()
 
-
-    mels_test_f = open('data/mels-test.pickle')
-    tags_test_f = open('data/tags-test.pickle')
+    mels_test_f = open(mels_test_path)
+    tags_test_f = open(tags_test_path)
     # After training, we compute and print the test error:
     test_err = 0
     test_acc = 0
