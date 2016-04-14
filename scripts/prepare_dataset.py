@@ -30,11 +30,11 @@ reader = csv.reader(tags_csv_file, delimiter='\t')
 tags_list = list(reader)
 
 # prepare tags pickle file
-tags_pickle_file = open(tags_pickle_path, 'w')
-mels_pickle_file = open(mels_pickle_path, 'w')
+tags_pickle_file = open(tags_pickle_path, 'a')
+mels_pickle_file = open(mels_pickle_path, 'a')
 
-tags_test_pickle_file = open(tags_test_pickle_path, 'w')
-mels_test_pickle_file = open(mels_test_pickle_path, 'w')
+tags_test_pickle_file = open(tags_test_pickle_path, 'a')
+mels_test_pickle_file = open(mels_test_pickle_path, 'a')
 
 # load tags model
 model = gensim.models.Doc2Vec.load(model_path)
@@ -52,36 +52,43 @@ for row in tags_list[1:]:
 
     # extract mel spec from sample
     sample_filename = os.path.join(os.getcwd(), magna_dir, row[-1])
-    y, sr = librosa.load(sample_filename, sr=16000)
-    spectrum = librosa.feature.melspectrogram(
-            y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
-            hop_length=hop)
 
-    # this gives us 10 decimal point precision, so ~-80 dB.
-    # should be enough and saves a lot of space
-    spectrum = spectrum.astype(np.float16)
-    #flip frequency and time axis
-    spectrum = spectrum.transpose()
-
-    tags_vector = model.docvecs[clip_id].astype(np.float16)
-
-    # Write nparrays in pickle files. For each file, its tag vector and mel
-    # spec nparrays MUST be in the same line number on the train files
-
-    # TODO: if we want to save 10% for testing we could just take every 10th
-    # sample for testing - it should be more evenly distributed as sometimes
-    # there are multiple parts of the same song one after another
-    # if count%10 == 0:
-    if count >= 20000:
-        pickle.dump(tags_vector, tags_test_pickle_file)
-        pickle.dump(spectrum, mels_test_pickle_file)
+    try:
+        y, sr = librosa.load(sample_filename, sr=16000)
+    except IOError:
+        print 'file not found: ' + row[-1]
+    except EOFError:
+        print 'file broken: ' + row[-1]
     else:
-        pickle.dump(tags_vector, tags_pickle_file)
-        pickle.dump(spectrum, mels_pickle_file)
+        spectrum = librosa.feature.melspectrogram(
+                y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
+                hop_length=hop)
 
-    count += 1
-    print '\r', 'done: ', count, '/', model.docvecs.count, \
-            '(', count * 100 / model.docvecs.count, '%)',
+        # this gives us 10 decimal point precision, so ~-80 dB.
+        # should be enough and saves a lot of space
+        spectrum = spectrum.astype(np.float16)
+        #flip frequency and time axis
+        spectrum = spectrum.transpose()
+
+        tags_vector = model.docvecs[clip_id].astype(np.float16)
+
+        # Write nparrays in pickle files. For each file, its tag vector and mel
+        # spec nparrays MUST be in the same line number on the train files
+
+        # TODO: if we want to save 10% for testing we could just take every 10th
+        # sample for testing - it should be more evenly distributed as sometimes
+        # there are multiple parts of the same song one after another
+        # if count%10 == 0:
+        if count >= 20000:
+            pickle.dump(tags_vector, tags_test_pickle_file)
+            pickle.dump(spectrum, mels_test_pickle_file)
+        else:
+            pickle.dump(tags_vector, tags_pickle_file)
+            pickle.dump(spectrum, mels_pickle_file)
+
+        count += 1
+        print '\r', 'done: ', count, '/', model.docvecs.count, \
+                '(', count * 100 / model.docvecs.count, '%)',
 
     # if count == 1000: break
 
