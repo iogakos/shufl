@@ -26,7 +26,7 @@ mels_pickle_file = open(mels_pickle_path, 'w')
 model = gensim.models.Doc2Vec.load(model_path)
 
 # mel spec properties
-stft_window = 2048
+stft_window = 3116
 hop = stft_window / 4
 
 count = 0
@@ -44,7 +44,7 @@ for row in tags_list[1:]:
             hop_length=hop)
 
     #flip frequency and time axis
-    spectrum.transpose()
+    spectrum = spectrum.transpose()
 
     # Write nparrays in pickle files. For each file, its tag vector and mel
     # spec nparrays MUST be in the same line number on the train files
