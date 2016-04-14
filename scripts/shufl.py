@@ -14,59 +14,6 @@ import lasagne
 
 import pickle
 
-# ################## Download and prepare the MNIST dataset ##################
-# This is just some way of getting the MNIST dataset from an online location
-# and loading it into numpy arrays. It doesn't involve Lasagne at all.
-
-def load_dataset():
-
-    #from http://stackoverflow.com/questions/18675863/load-data-from-python-pickle-file-in-a-loop
-    def pickleLoader(f):
-        try:
-            while True:
-                yield pickle.load(f)
-        except EOFError:
-            pass
-
-    def load_mel_specs(filename):
-        data = np.ndarray(1000 * 599 * 128, np.float16)
-        data = data.reshape(-1, 1, 599, 128)
-
-        with open(filename) as f:
-            i = 0
-            for mel in pickleLoader(f):
-                data[i][0] = mel
-                i += 1
-
-        return data
-
-    def load_tag_vectors(filename):
-        data = np.ndarray((1000, 40), np.float16)
-        with open(filename) as f:
-            i = 0
-            for tag_vector in pickleLoader(f):
-                data[i] = tag_vector
-                i += 1
-        return data
-
-    # We can now download and read the training and test set images and labels.
-    X_train = load_mel_specs('data/mels.pickle')
-    y_train = load_tag_vectors('data/tags.pickle')
-
-     # not ready for testing yet
-#    X_test = load_mnist_images('t10k-images-idx3-ubyte.gz')
-#    y_test = load_mnist_labels('t10k-labels-idx1-ubyte.gz')
-#
-    # We reserve the last 1000 training examples for validation.
-    X_test = X_train[900:1000]
-    y_test = y_train[900:1000]
-    X_train, X_val = X_train[:800], X_train[800:900]
-    y_train, y_val = y_train[:800], y_train[800:900]
-
-    # We just return all the arrays in order, as expected in main().
-    # (It doesn't matter how we do this as long as we can read them again.)
-    return X_train, y_train, X_val, y_val, X_test, y_test
-
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
     # Create a CNN following benanne's network: http://benanne.github.io/2014/08/05/spotify-cnns.html
@@ -138,6 +85,15 @@ def build_cnn(input_var=None):
 
     return network
 
+#from http://stackoverflow.com/questions/18675863/load-data-from-python-pickle-file-in-a-loop
+def pickleLoader(f, batchsize):
+    try:
+        i = 0
+        while True and i < batchsize:
+            yield i, pickle.load(f)
+            i +=1
+    except EOFError:
+        pass
 
 # ############################# Batch iterator ###############################
 # This is just a simple helper function iterating over training data in
@@ -147,18 +103,22 @@ def build_cnn(input_var=None):
 # own custom data iteration function. For small datasets, you can also copy
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
+def iterate_minibatches(totalsize, batchsize, mels_f, tags_f):
+    for cnt in range(0, totalsize, batchsize):
+        mel_data = np.ndarray(batchsize * 599 * 128, np.float16)
+        mel_data = mel_data.reshape(-1, 1, 599, 128)
 
-def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
-    assert len(inputs) == len(targets)
-    if shuffle:
-        indices = np.arange(len(inputs))
-        np.random.shuffle(indices)
-    for start_idx in range(0, len(inputs) - batchsize + 1, batchsize):
-        if shuffle:
-            excerpt = indices[start_idx:start_idx + batchsize]
-        else:
-            excerpt = slice(start_idx, start_idx + batchsize)
-        yield inputs[excerpt], targets[excerpt]
+        tag_data = np.ndarray((batchsize, 40), np.float16)
+
+        for i, mel in pickleLoader(mels_f, batchsize):
+            mel_data[i][0] = mel
+
+        for i, tag_vector in pickleLoader(tags_f, batchsize):
+            tag_data[i] = tag_vector
+
+        assert len(mel_data) == len(tag_data)
+
+        yield mel_data, tag_data
 
 
 # ############################## Main program ################################
@@ -169,7 +129,6 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
 def main(num_epochs=10):
     # Load the dataset
     print("Loading data...")
-    X_train, y_train, X_val, y_val, X_test, y_test = load_dataset()
 
     # Prepare Theano variables for inputs and targets
     input_var = T.tensor4('inputs')
@@ -191,7 +150,6 @@ def main(num_epochs=10):
     updates = lasagne.updates.nesterov_momentum(
             loss, params, learning_rate=0.01, momentum=0.9)
 
-
     # Create a loss expression for validation/testing. The crucial difference
     # here is that we do a deterministic forward pass through the network,
     # disabling dropout layers.
@@ -202,7 +160,6 @@ def main(num_epochs=10):
     # As a bonus, also create an expression for the classification accuracy:
     test_acc = 1 - test_loss
 
-
     # Compile a function performing a training step on a mini-batch (by giving
     # the updates dictionary) and returning the corresponding training loss:
     train_fn = theano.function([input_var, target_var], loss, updates=updates)
@@ -210,18 +167,19 @@ def main(num_epochs=10):
     # Compile a second function computing the validation loss and accuracy:
     val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
 
-
-
     # Finally, launch the training loop.
     print("Starting training...")
     # We iterate over epochs:
     for epoch in range(num_epochs):
         # In each epoch, we do a full pass over the training data:
+
+        mels_f = open('data/mels.pickle')
+        tags_f = open('data/tags.pickle')
+
         train_err = 0
         train_batches = 0
         start_time = time.time()
-        for batch in iterate_minibatches(X_train, y_train, 50, shuffle=False):
-            inputs, targets = batch
+        for inputs, targets in iterate_minibatches(800, 50, mels_f, tags_f):
             train_err += train_fn(inputs, targets)
             train_batches += 1
             print(train_err)
@@ -230,8 +188,7 @@ def main(num_epochs=10):
         val_err = 0
         val_acc = 0
         val_batches = 0
-        for batch in iterate_minibatches(X_val, y_val, 50, shuffle=False):
-            inputs, targets = batch
+        for inputs, targets in iterate_minibatches(100, 50, mels_f, tags_f):
             err, acc = val_fn(inputs, targets)
             val_err += err
             val_acc += acc
@@ -245,17 +202,23 @@ def main(num_epochs=10):
         print("  validation accuracy:\t\t{:.2f} %".format(
             val_acc / val_batches * 100))
 
+        mels_f.close()
+        tags_f.close()
 
+
+    mels_test_f = open('data/mels-test.pickle')
+    tags_test_f = open('data/tags-test.pickle')
     # After training, we compute and print the test error:
     test_err = 0
     test_acc = 0
     test_batches = 0
-    for batch in iterate_minibatches(X_test, y_test, 10, shuffle=False):
+    for batch in iterate_minibatches(100, 10, mels_test_f, tags_test_f):
         inputs, targets = batch
         err, acc = val_fn(inputs, targets)
         test_err += err
         test_acc += acc
         test_batches += 1
+
     print("Final results:")
     print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
     print("  test accuracy:\t\t{:.2f} %".format(
