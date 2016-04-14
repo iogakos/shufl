@@ -181,10 +181,12 @@ def main(num_epochs=10):
 
     # Finally, launch the training loop.
     print("Starting training...")
+
     # We iterate over epochs:
     for epoch in range(num_epochs):
         # In each epoch, we do a full pass over the training data:
 
+        # open pickle files for the train/validation set
         mels_f = open(mels_path)
         tags_f = open(tags_path)
 
@@ -214,11 +216,14 @@ def main(num_epochs=10):
         print("  validation accuracy:\t\t{:.2f} %".format(
             val_acc / val_batches * 100))
 
+        # close pickle files to restart the stream for pickle loader
         mels_f.close()
         tags_f.close()
 
+    # open pickle files for the test set
     mels_test_f = open(mels_test_path)
     tags_test_f = open(tags_test_path)
+
     # After training, we compute and print the test error:
     test_err = 0
     test_acc = 0
@@ -234,6 +239,9 @@ def main(num_epochs=10):
     print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
     print("  test accuracy:\t\t{:.2f} %".format(
         test_acc / test_batches * 100))
+
+    mels_test_f.close()
+    tags_test_f.close()
 
 if __name__ == '__main__':
     if ('--help' in sys.argv) or ('-h' in sys.argv):
