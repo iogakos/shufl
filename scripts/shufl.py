@@ -20,12 +20,15 @@ tags_path = 'data/tags.pickle'
 mels_test_path = 'data/mels-test.pickle'
 tags_test_path = 'data/tags-test.pickle'
 
+model_path = 'data/shufl.pickle'
+
 # uncomment for running on aws
 data_root = '/mnt/'
 mels_path = data_root + mels_path
 tags_path = data_root + tags_path
 mels_test_path = data_root + mels_test_path
 tags_test_path = data_root + tags_test_path
+model_path = data_root + model_path
 
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
@@ -116,7 +119,7 @@ def pickleLoader(f, batchsize):
 # own custom data iteration function. For small datasets, you can also copy
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
-def iterate_minibatches(totalsize, batchsize, mels_f, tags_f):
+def it_minibatches(totalsize, batchsize, mels_f, tags_f):
     for cnt in range(0, totalsize, batchsize):
         mel_data = np.ndarray(batchsize * 599 * 128, np.float16)
         mel_data = mel_data.reshape(-1, 1, 599, 128)
@@ -139,7 +142,7 @@ def iterate_minibatches(totalsize, batchsize, mels_f, tags_f):
 # more functions to better separate the code, but it wouldn't make it any
 # easier to read.
 
-def main(num_epochs=10):
+def main(num_epochs=10, mode='train'):
     # Load the dataset
     print("Loading data...")
 
@@ -173,53 +176,67 @@ def main(num_epochs=10):
     # As a bonus, also create an expression for the classification accuracy:
     test_acc = 1 - test_loss
 
-    # Compile a function performing a training step on a mini-batch (by giving
-    # the updates dictionary) and returning the corresponding training loss:
-    train_fn = theano.function([input_var, target_var], loss, updates=updates, mode=NanGuardMode(nan_is_error=True, inf_is_error=True, big_is_error=True))
-
     # Compile a second function computing the validation loss and accuracy:
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], mode=NanGuardMode(nan_is_error=True, inf_is_error=True, big_is_error=True))
+    val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
 
-    # Finally, launch the training loop.
-    print("Starting training...")
+    if mode == 'train':
+        print("Entered training mode")
+        # Compile a function performing a training step on a mini-batch (by giving
+        # the updates dictionary) and returning the corresponding training loss:
+        train_fn = theano.function([input_var, target_var], loss, updates=updates)
 
-    # We iterate over epochs:
-    for epoch in range(num_epochs):
-        # In each epoch, we do a full pass over the training data:
+        # Finally, launch the training loop.
+        print("Starting training...")
 
-        # open pickle files for the train/validation set
-        mels_f = open(mels_path)
-        tags_f = open(tags_path)
+        # We iterate over epochs:
+        for epoch in range(num_epochs):
+            # In each epoch, we do a full pass over the training data:
 
-        train_err = 0
-        train_batches = 0
-        start_time = time.time()
-        for inputs, targets in iterate_minibatches(18000, 500, mels_f, tags_f):
-            train_err += train_fn(inputs, targets)
-            train_batches += 1
-            print(train_err)
+            # open pickle files for the train/validation set
+            mels_f = open(mels_path)
+            tags_f = open(tags_path)
 
-        # And a full pass over the validation data:
-        val_err = 0
-        val_acc = 0
-        val_batches = 0
-        for inputs, targets in iterate_minibatches(2000, 500, mels_f, tags_f):
-            err, acc = val_fn(inputs, targets)
-            val_err += err
-            val_acc += acc
-            val_batches += 1
+            train_err = 0
+            train_batches = 0
+            start_time = time.time()
+            for inputs, targets in it_minibatches(18000, 500, mels_f, tags_f):
+                train_err += train_fn(inputs, targets)
+                train_batches += 1
+                print(train_err)
 
-        # Then we print the results for this epoch:
-        print("Epoch {} of {} took {:.3f}s".format(
-            epoch + 1, num_epochs, time.time() - start_time))
-        print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-        print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-        print("  validation accuracy:\t\t{:.2f} %".format(
-            val_acc / val_batches * 100))
+            # And a full pass over the validation data:
+            val_err = 0
+            val_acc = 0
+            val_batches = 0
+            for inputs, targets in it_minibatches(2000, 500, mels_f, tags_f):
+                err, acc = val_fn(inputs, targets)
+                val_err += err
+                val_acc += acc
+                val_batches += 1
 
-        # close pickle files to restart the stream for pickle loader
-        mels_f.close()
-        tags_f.close()
+            # Then we print the results for this epoch:
+            print("Epoch {} of {} took {:.3f}s".format(
+                epoch + 1, num_epochs, time.time() - start_time))
+            print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
+            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+            print("  validation accuracy:\t\t{:.2f} %".format(
+                val_acc / val_batches * 100))
+
+            # close pickle files to restart the stream for pickle loader
+            mels_f.close()
+            tags_f.close()
+
+            print("Saving model...")
+            params = lasagne.layers.get_all_param_values(network)
+            with open(model_path, 'w') as f:
+                pickle.dump(params, f)
+
+    else:
+        print("Entered validation mode")
+        with open(model_path, 'r') as f:
+            params = pickle.load(f)
+
+        lasagne.layers.set_all_param_values(network, params)
 
     # open pickle files for the test set
     mels_test_f = open(mels_test_path)
@@ -229,7 +246,7 @@ def main(num_epochs=10):
     test_err = 0
     test_acc = 0
     test_batches = 0
-    for batch in iterate_minibatches(1600, 100, mels_test_f, tags_test_f):
+    for batch in it_minibatches(1600, 100, mels_test_f, tags_test_f):
         inputs, targets = batch
         err, acc = val_fn(inputs, targets)
         test_err += err
@@ -245,13 +262,20 @@ def main(num_epochs=10):
     tags_test_f.close()
 
 if __name__ == '__main__':
-    if ('--help' in sys.argv) or ('-h' in sys.argv):
-        print("Trains a neural network on MNIST using Lasagne.")
-        print("Usage: %s [EPOCHS]" % sys.argv[0])
-        print()
-        print("EPOCHS: number of training epochs to perform (default: 500)")
-    else:
-        kwargs = {}
-        if len(sys.argv) > 1:
-            kwargs['num_epochs'] = int(sys.argv[1])
-        main(**kwargs)
+    import argparse
+    parser = argparse.ArgumentParser(description='GI15 2016 - Shufl')
+    parser.add_argument('-e', '--epochs', metavar='N', type=int,
+            help='Number of training epochs (default: 500)')
+    parser.add_argument('-m', '--mode', metavar='<mode>',
+            help='Set to `train` for training or `val` for validating ' + \
+                    '(Default `train`')
+
+    args = parser.parse_args()
+
+    kwargs = {}
+    if args.epochs is not None:
+        kwargs['num_epochs'] = args.epochs
+    if args.mode is not None:
+        kwargs['mode'] = args.mode
+
+    main(**kwargs)
