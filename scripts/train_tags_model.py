@@ -11,7 +11,11 @@ class MagnaTags(object):
 import gensim
 import os
 
-model_path = './data/d2vmodel.doc2vec'
+model_path = 'data/d2vmodel.doc2vec'
+
+# uncomment for running on aws
+data_root = '/mnt/'
+model_path = data_root + model_path
 
 try:
     model = gensim.models.Doc2Vec.load(model_path)

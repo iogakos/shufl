@@ -16,13 +16,13 @@ mels_test_pickle_path = 'data/mels-test.pickle'
 tags_csv_path = 'data/annotations_final.csv'
 magna_dir = 'data/magna'
 # uncomment for aws
-# data_root = '/mnt/'
-# model_path = data_root + model_path
-# tags_pickle_path = data_root + tags_pickle_path
-# mels_pickle_path = data_root + mels_pickle_path
-# tags_test_pickle_path = data_root + tags_test_pickle_path
-# mels_test_pickle_path = data_root + mels_test_pickle_path
-# magna_dir = data_root + magna_dir
+data_root = '/mnt/'
+model_path = data_root + model_path
+tags_pickle_path = data_root + tags_pickle_path
+mels_pickle_path = data_root + mels_pickle_path
+tags_test_pickle_path = data_root + tags_test_pickle_path
+mels_test_pickle_path = data_root + mels_test_pickle_path
+magna_dir = data_root + magna_dir
 
 # prepare traverse of tags list
 tags_csv_file = open(tags_csv_path, 'r')
@@ -72,7 +72,7 @@ for row in tags_list[1:]:
     # sample for testing - it should be more evenly distributed as sometimes
     # there are multiple parts of the same song one after another
     # if count%10 == 0:
-    if count >= 900:
+    if count >= 20000:
         pickle.dump(tags_vector, tags_test_pickle_file)
         pickle.dump(spectrum, mels_test_pickle_file)
     else:
@@ -83,7 +83,7 @@ for row in tags_list[1:]:
     print '\r', 'done: ', count, '/', model.docvecs.count, \
             '(', count * 100 / model.docvecs.count, '%)',
 
-    if count == 1000: break
+    # if count == 1000: break
 
 tags_pickle_file.close()
 mels_pickle_file.close()

@@ -9,6 +9,7 @@ import time
 import numpy as np
 import theano
 import theano.tensor as T
+from theano.compile.nanguardmode import NanGuardMode
 
 import lasagne
 
@@ -20,11 +21,11 @@ mels_test_path = 'data/mels-test.pickle'
 tags_test_path = 'data/tags-test.pickle'
 
 # uncomment for running on aws
-# data_root = '/mnt/'
-# mels_path = data_root + mels_path
-# tags_path = data_root + tags_path
-# mels_test_path = data_root + mels_test_path
-# tags_test_path = data_root + tags_test_path
+data_root = '/mnt/'
+mels_path = data_root + mels_path
+tags_path = data_root + tags_path
+mels_test_path = data_root + mels_test_path
+tags_test_path = data_root + tags_test_path
 
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
@@ -93,7 +94,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(network, p=.5),
             num_units=40,
-            nonlinearity=lasagne.nonlinearities.rectify)
+            nonlinearity=lasagne.nonlinearities.softmax)
 
     return network
 
@@ -174,10 +175,10 @@ def main(num_epochs=10):
 
     # Compile a function performing a training step on a mini-batch (by giving
     # the updates dictionary) and returning the corresponding training loss:
-    train_fn = theano.function([input_var, target_var], loss, updates=updates)
+    train_fn = theano.function([input_var, target_var], loss, updates=updates, mode=NanGuardMode(nan_is_error=True, inf_is_error=True, big_is_error=True))
 
     # Compile a second function computing the validation loss and accuracy:
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
+    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], mode=NanGuardMode(nan_is_error=True, inf_is_error=True, big_is_error=True))
 
     # Finally, launch the training loop.
     print("Starting training...")
@@ -193,7 +194,7 @@ def main(num_epochs=10):
         train_err = 0
         train_batches = 0
         start_time = time.time()
-        for inputs, targets in iterate_minibatches(800, 50, mels_f, tags_f):
+        for inputs, targets in iterate_minibatches(18000, 500, mels_f, tags_f):
             train_err += train_fn(inputs, targets)
             train_batches += 1
             print(train_err)
@@ -202,7 +203,7 @@ def main(num_epochs=10):
         val_err = 0
         val_acc = 0
         val_batches = 0
-        for inputs, targets in iterate_minibatches(100, 50, mels_f, tags_f):
+        for inputs, targets in iterate_minibatches(2000, 500, mels_f, tags_f):
             err, acc = val_fn(inputs, targets)
             val_err += err
             val_acc += acc
@@ -228,7 +229,7 @@ def main(num_epochs=10):
     test_err = 0
     test_acc = 0
     test_batches = 0
-    for batch in iterate_minibatches(100, 10, mels_test_f, tags_test_f):
+    for batch in iterate_minibatches(1600, 100, mels_test_f, tags_test_f):
         inputs, targets = batch
         err, acc = val_fn(inputs, targets)
         test_err += err
