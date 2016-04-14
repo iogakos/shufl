@@ -6,6 +6,7 @@ import librosa
 import pickle
 import csv
 import os
+import numpy as np
 
 model_path = './data/d2vmodel.doc2vec'
 tags_pickle_path = 'data/tags.pickle'
@@ -43,21 +44,19 @@ for row in tags_list[1:]:
             y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
             hop_length=hop)
 
+    spectrum = spectrum.astype(np.float16)
     #flip frequency and time axis
     spectrum = spectrum.transpose()
 
+    tags_vector = model.docvecs[clip_id].astype(np.float16)
+
     # Write nparrays in pickle files. For each file, its tag vector and mel
     # spec nparrays MUST be in the same line number on the train files
-    pickle.dump(model.docvecs[clip_id], tags_pickle_file)
+    pickle.dump(tags_vector, tags_pickle_file)
     pickle.dump(spectrum, mels_pickle_file)
 
     count += 1
     print '\r', 'done: ', count, '/', model.docvecs.count, \
             '(', count / model.docvecs.count, '%)',
 
-    if count == 100: break
-
-#
-#with open(filename) as f:
-#    for event in pickleLoader(f):
-#        do_something()
+    if count == 1000: break
