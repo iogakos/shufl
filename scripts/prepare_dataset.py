@@ -70,3 +70,8 @@ for row in tags_list[1:]:
             '(', count / model.docvecs.count, '%)',
 
     if count == 1000: break
+
+tags_pickle_file.close()
+mels_pickle_file.close()
+tags_test_pickle_file.close()
+mels_test_pickle_file.close()
