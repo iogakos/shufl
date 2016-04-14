@@ -177,7 +177,8 @@ def main(num_epochs=10, mode='train'):
     test_acc = 1 - test_loss
 
     # Compile a second function computing the validation loss and accuracy:
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
+    val_fn = theano.function(
+            [input_var, target_var], [test_loss, test_acc, prediction])
 
     if mode == 'train':
         print("Entered training mode")
@@ -209,7 +210,7 @@ def main(num_epochs=10, mode='train'):
             val_acc = 0
             val_batches = 0
             for inputs, targets in it_minibatches(2000, 500, mels_f, tags_f):
-                err, acc = val_fn(inputs, targets)
+                err, acc, _ = val_fn(inputs, targets)
                 val_err += err
                 val_acc += acc
                 val_batches += 1
@@ -248,7 +249,7 @@ def main(num_epochs=10, mode='train'):
     test_batches = 0
     for batch in it_minibatches(1600, 100, mels_test_f, tags_test_f):
         inputs, targets = batch
-        err, acc = val_fn(inputs, targets)
+        err, acc, _ = val_fn(inputs, targets)
         test_err += err
         test_acc += acc
         test_batches += 1
