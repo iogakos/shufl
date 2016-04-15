@@ -13,6 +13,8 @@ parser = argparse.ArgumentParser(
         description='GI15 2016 - Prepare dataset for training/validation')
 parser.add_argument('-c', '--clips-only', action='store_true',
         help='Creates a line separated file with the CLIP_IDs')
+parser.add_argument('-a', '--aws', action='store_true',
+	help='Generates dataset appropriate for the EC2 instance')
 
 args = parser.parse_args()
 
@@ -24,15 +26,6 @@ mels_test_pickle_path = 'data/mels-test.pickle'
 tags_csv_path = 'data/annotations_final.csv'
 magna_dir = 'data/magna'
 clips_path = 'data/clips'
-# uncomment for aws
-#data_root = '/mnt/'
-#model_path = data_root + model_path
-#tags_pickle_path = data_root + tags_pickle_path
-#mels_pickle_path = data_root + mels_pickle_path
-#tags_test_pickle_path = data_root + tags_test_pickle_path
-#mels_test_pickle_path = data_root + mels_test_pickle_path
-#magna_dir = data_root + magna_dir
-#clips_path = data_root + clips_path 
 
 # prepare traverse of tags list
 tags_csv_file = open(tags_csv_path, 'r')
@@ -82,11 +75,11 @@ for row in tags_list[1:]:
 
         # this gives us 10 decimal point precision, so ~-80 dB.
         # should be enough and saves a lot of space
-        spectrum = spectrum.astype(np.float16)
+        spectrum = spectrum.astype(np.float32)
         #flip frequency and time axis
         spectrum = spectrum.transpose()
 
-        tags_vector = model.docvecs[clip_id].astype(np.float16)
+        tags_vector = model.docvecs[clip_id]
 
         # Write nparrays in pickle files. For each file, its tag vector and mel
         # spec nparrays MUST be in the same line number on the train files
@@ -106,7 +99,7 @@ for row in tags_list[1:]:
         print '\r', 'done: ', count, '/', model.docvecs.count, \
                 '(', count * 100 / model.docvecs.count, '%)',
 
-#        if count == 1000: break
+	if args.aws is False and count == 1000: break
 
 if args.clips_only is False:
     tags_pickle_file.close()
