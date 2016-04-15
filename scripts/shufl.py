@@ -12,23 +12,28 @@ import theano.tensor as T
 from theano.compile.nanguardmode import NanGuardMode
 
 import lasagne
+import gensim
 
 import pickle
+import argparse
 
 mels_path = 'data/mels.pickle'
 tags_path = 'data/tags.pickle'
+clips_path = 'data/clips'
 mels_test_path = 'data/mels-test.pickle'
 tags_test_path = 'data/tags-test.pickle'
 
 model_path = 'data/shufl.pickle'
+d2v_model_path = 'data/d2vmodel.doc2vec'
 
 # uncomment for running on aws
-data_root = '/mnt/'
-mels_path = data_root + mels_path
-tags_path = data_root + tags_path
-mels_test_path = data_root + mels_test_path
-tags_test_path = data_root + tags_test_path
-model_path = data_root + model_path
+#data_root = '/mnt/'
+#mels_path = data_root + mels_path
+#tags_path = data_root + tags_path
+#mels_test_path = data_root + mels_test_path
+#tags_test_path = data_root + tags_test_path
+#model_path = data_root + model_path
+#clips_path = data_root + clips_path
 
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
@@ -137,6 +142,30 @@ def it_minibatches(totalsize, batchsize, mels_f, tags_f):
         yield mel_data, tag_data
 
 
+def validate(val_fun):
+    # open pickle files for the test set
+    mels_test_f = open(mels_test_path)
+    tags_test_f = open(tags_test_path)
+
+    # After training, we compute and print the test error:
+    test_err = 0
+    test_acc = 0
+    test_batches = 0
+    for batch in it_minibatches(1600, 100, mels_test_f, tags_test_f):
+        inputs, targets = batch
+        err, acc, _ = val_fn(inputs, targets)
+        test_err += err
+        test_acc += acc
+        test_batches += 1
+
+    print("Final results:")
+    print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
+    print("  test accuracy:\t\t{:.2f} %".format(
+        test_acc / test_batches * 100))
+
+    mels_test_f.close()
+    tags_test_f.close()
+
 # ############################## Main program ################################
 # Everything else will be handled in our main program now. We could pull out
 # more functions to better separate the code, but it wouldn't make it any
@@ -232,44 +261,85 @@ def main(num_epochs=10, mode='train'):
             with open(model_path, 'w') as f:
                 pickle.dump(params, f)
 
-    else:
+        validate(val_fn)
+    elif mode == 'val':
         print("Entered validation mode")
         with open(model_path, 'r') as f:
             params = pickle.load(f)
 
         lasagne.layers.set_all_param_values(network, params)
+        validate(val_fn)
+    else:
+        print("Entered user mode")
+        if args.clip_id is not None:
+            print("Calculating closest vectors for %s" % args.clip_id)
+            with open(model_path, 'r') as f:
+                params = pickle.load(f)
 
-    # open pickle files for the test set
-    mels_test_f = open(mels_test_path)
-    tags_test_f = open(tags_test_path)
 
-    # After training, we compute and print the test error:
-    test_err = 0
-    test_acc = 0
-    test_batches = 0
-    for batch in it_minibatches(1600, 100, mels_test_f, tags_test_f):
-        inputs, targets = batch
-        err, acc, _ = val_fn(inputs, targets)
-        test_err += err
-        test_acc += acc
-        test_batches += 1
+            with open(clips_path, 'r') as f:
+                found = False
+                for line_no, line in enumerate(f, 0):
+                    if args.clip_id == line[:-1]:
+                        found = True
+                        break
 
-    print("Final results:")
-    print("  test loss:\t\t\t{:.6f}".format(test_err / test_batches))
-    print("  test accuracy:\t\t{:.2f} %".format(
-        test_acc / test_batches * 100))
+            if found is True:
+                spectrogram = np.ndarray(599 * 128, np.float16)
+                spectrogram = spectrogram.reshape(-1, 1, 599, 128)
+                
+                found = False
+                with open(mels_path) as mels_f:
+                    for i, mel in pickleLoader(mels_f, 21642):
+                        if i == line_no:
+                            found = True
+                            spectrogram[0] = mel
+                            break
 
-    mels_test_f.close()
-    tags_test_f.close()
+                if found is False:
+                    print("Could not find cached mel spectrum for %s" % \
+                            args.clip_id)
+                else:
+                    lasagne.layers.set_all_param_values(network, params)
+
+                    tag_zeros = np.ndarray((1, 40), np.float16)
+                    _, _, tag_prediction = val_fn(spectrogram, tag_zeros)
+                    d2v_model = gensim.models.Doc2Vec.load(d2v_model_path)
+
+                    # iterate over the d2v dictionary and find the maximally
+                    # similar songs by calculating the euclidian distance to
+                    # each
+                    values = [
+                        tuple([
+                            np.linalg.norm(
+                            tag_prediction-d2v_model.docvecs[clip]),clip])
+                            for clip in d2v_model.docvecs.doctags.keys()]
+
+                    arr = np.array(
+                            values, dtype=[('dist','f16'),('id','|S10')])
+                    inds = np.argsort(arr['dist'])
+                    top10 = inds[:10]
+                    result = np.ndarray(
+                            (10,), dtype=[('dist','f16'),('id','|S10')])
+
+                    np.take(arr, top10, out=result)
+                    print(result['id'])
+            else:
+                print(args.clip_id, " not found")
+
+
+
 
 if __name__ == '__main__':
-    import argparse
     parser = argparse.ArgumentParser(description='GI15 2016 - Shufl')
     parser.add_argument('-e', '--epochs', metavar='N', type=int,
             help='Number of training epochs (default: 500)')
     parser.add_argument('-m', '--mode', metavar='<mode>',
-            help='Set to `train` for training or `val` for validating ' + \
-                    '(Default `train`')
+            help='Set to `train` for training, `val` for validating. ' + \
+                    '`user` for user mode (Default `train`)')
+    parser.add_argument('-c', '--clip-id',
+            help='Return the closest vectors for a specific clip id from ' + \
+                    'the MagnaTagATune dataset')
 
     args = parser.parse_args()
 
