@@ -12,3 +12,6 @@
 magnatagatune_dataset/*
 src/*
 venv-shufl/*
+
+data*
+log*
