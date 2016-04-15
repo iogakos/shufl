@@ -180,9 +180,7 @@ rm /mnt/data/magna/9/american_baroque-dances_and_suites_of_rameau_and_couperin-2
 
 to make theano run on gpu by default:
 ```bash
-echo -e '[global]\nfloatX=float32\ndevice=gpu\n\n[lib]\ncnmem=0.9\n\n[nvcc]\nfastmath=True' > ~/.theanorc
+echo -e '[global]\nfloatX=float32\ndevice=gpu\n\n[mode]=FAST_RUN\n\n[lib]\ncnmem=0.9\n\n[nvcc]\nfastmath=True\n\n[cuda]\nroot=/usr/local/cuda' > ~/.theanorc
 ```
-
-
 
 # usage
