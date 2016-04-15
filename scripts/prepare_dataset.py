@@ -8,6 +8,14 @@ import csv
 import os
 import numpy as np
 
+import argparse
+parser = argparse.ArgumentParser(
+        description='GI15 2016 - Prepare dataset for training/validation')
+parser.add_argument('-c', '--clips-only', action='store_true',
+        help='Creates a line separated file with the CLIP_IDs')
+
+args = parser.parse_args()
+
 model_path = 'data/d2vmodel.doc2vec'
 tags_pickle_path = 'data/tags.pickle'
 mels_pickle_path = 'data/mels.pickle'
@@ -15,26 +23,30 @@ tags_test_pickle_path = 'data/tags-test.pickle'
 mels_test_pickle_path = 'data/mels-test.pickle'
 tags_csv_path = 'data/annotations_final.csv'
 magna_dir = 'data/magna'
+clips_path = 'data/clips'
 # uncomment for aws
-data_root = '/mnt/'
-model_path = data_root + model_path
-tags_pickle_path = data_root + tags_pickle_path
-mels_pickle_path = data_root + mels_pickle_path
-tags_test_pickle_path = data_root + tags_test_pickle_path
-mels_test_pickle_path = data_root + mels_test_pickle_path
-magna_dir = data_root + magna_dir
+#data_root = '/mnt/'
+#model_path = data_root + model_path
+#tags_pickle_path = data_root + tags_pickle_path
+#mels_pickle_path = data_root + mels_pickle_path
+#tags_test_pickle_path = data_root + tags_test_pickle_path
+#mels_test_pickle_path = data_root + mels_test_pickle_path
+#magna_dir = data_root + magna_dir
+#clips_path = data_root + clips_path 
 
 # prepare traverse of tags list
 tags_csv_file = open(tags_csv_path, 'r')
 reader = csv.reader(tags_csv_file, delimiter='\t')
 tags_list = list(reader)
 
-# prepare tags pickle file
-tags_pickle_file = open(tags_pickle_path, 'w')
-mels_pickle_file = open(mels_pickle_path, 'w')
+if args.clips_only is False:
+    # prepare tags pickle file
+    tags_pickle_file = open(tags_pickle_path, 'w')
+    mels_pickle_file = open(mels_pickle_path, 'w')
 
-tags_test_pickle_file = open(tags_test_pickle_path, 'w')
-mels_test_pickle_file = open(mels_test_pickle_path, 'w')
+    tags_test_pickle_file = open(tags_test_pickle_path, 'w')
+    mels_test_pickle_file = open(mels_test_pickle_path, 'w')
+clips_file = open(clips_path, 'w')
 
 # load tags model
 model = gensim.models.Doc2Vec.load(model_path)
@@ -53,6 +65,9 @@ for row in tags_list[1:]:
     # extract mel spec from sample
     sample_filename = os.path.join(os.getcwd(), magna_dir, row[-1])
 
+    clips_file.write(''.join(s for s in [clip_id, '\n']))
+    if args.clips_only is True: continue
+
     try:
         y, sr = librosa.load(sample_filename, sr=16000)
     except IOError:
@@ -60,6 +75,7 @@ for row in tags_list[1:]:
     except EOFError:
         print 'file broken: ' + row[-1]
     else:
+
         spectrum = librosa.feature.melspectrogram(
                 y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
                 hop_length=hop)
@@ -75,9 +91,9 @@ for row in tags_list[1:]:
         # Write nparrays in pickle files. For each file, its tag vector and mel
         # spec nparrays MUST be in the same line number on the train files
 
-        # TODO: if we want to save 10% for testing we could just take every 10th
-        # sample for testing - it should be more evenly distributed as sometimes
-        # there are multiple parts of the same song one after another
+        # TODO: if we want to save 10% for testing we could just take every
+        # 10th sample for testing - it should be more evenly distributed as
+        # sometimes there are multiple parts of the same song one after another
         # if count%10 == 0:
         if count >= 20000:
             pickle.dump(tags_vector, tags_test_pickle_file)
@@ -90,9 +106,11 @@ for row in tags_list[1:]:
         print '\r', 'done: ', count, '/', model.docvecs.count, \
                 '(', count * 100 / model.docvecs.count, '%)',
 
-    # if count == 1000: break
+#        if count == 1000: break
 
-tags_pickle_file.close()
-mels_pickle_file.close()
-tags_test_pickle_file.close()
-mels_test_pickle_file.close()
+if args.clips_only is False:
+    tags_pickle_file.close()
+    mels_pickle_file.close()
+    tags_test_pickle_file.close()
+    mels_test_pickle_file.close()
+clips_file.close()
