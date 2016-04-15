@@ -120,10 +120,10 @@ def pickleLoader(f, batchsize):
 # several changes in the main program, though, and is not demonstrated here.
 def it_minibatches(totalsize, batchsize, mels_f, tags_f):
     for cnt in range(0, totalsize, batchsize):
-        mel_data = np.ndarray(batchsize * 599 * 128, np.float16)
+        mel_data = np.ndarray(batchsize * 599 * 128, np.float32)
         mel_data = mel_data.reshape(-1, 1, 599, 128)
 
-        tag_data = np.ndarray((batchsize, 40), np.float16)
+        tag_data = np.ndarray((batchsize, 40), np.float32)
 
         for i, mel in pickleLoader(mels_f, batchsize):
             mel_data[i][0] = mel
@@ -298,7 +298,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
 
             if found is True:
                 spectrogram = np.ndarray(
-                        int(config['mel_x']) * int(config['mel_y']), np.float16)
+                        int(config['mel_x']) * int(config['mel_y']), np.float32)
                 spectrogram = spectrogram.reshape(
                         -1, 1, int(config['mel_x']), int(config['mel_y']))
                 
@@ -317,7 +317,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                     lasagne.layers.set_all_param_values(network, params)
 
                     tag_zeros = np.ndarray(
-                            (1, int(config['latent_v'])), np.float16)
+                            (1, int(config['latent_v'])), np.float32)
                     _, _, tag_prediction = val_fn(spectrogram, tag_zeros)
                     d2v_model = gensim.models.Doc2Vec.load(d2v_model_path)
 
@@ -331,11 +331,11 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                             for clip in d2v_model.docvecs.doctags.keys()]
 
                     arr = np.array(
-                            values, dtype=[('dist','f16'),('id','|S10')])
+                            values, dtype=[('dist','float32'),('id','|S10')])
                     inds = np.argsort(arr['dist'])
                     top10 = inds[:10]
                     result = np.ndarray(
-                            (10,), dtype=[('dist','f16'),('id','|S10')])
+                            (10,), dtype=[('dist','float32'),('id','|S10')])
 
                     np.take(arr, top10, out=result)
                     print(result['id'])
