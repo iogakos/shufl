@@ -109,5 +109,80 @@ rm ./8/jacob_heringman-josquin_des_prez_lute_settings-19-gintzler__pater_noster-
 rm ./9/american_baroque-dances_and_suites_of_rameau_and_couperin-25-le_petit_rien_xiveme_ordre_couperin-88-117.mp3
 ```
 
+## cloud installation
+TODO: writing off the top of my head, verify
+
+follow the stanford guide at http://cs231n.github.io/aws-tutorial/ to setup a gpu instance with Theano and Lasagne preinstalled
+
+ssh into your machine
+
+follow install dependencies
+
+libsamplerate needs to be installed from source
+
+scikits.samplerate might need libsamplerate0-dev
+```bash
+sudo apt-get install libsamplerate0-dev
+pip install scikits.samplerate
+```
+
+getting ffmpeg on ubuntu (to be able to load mp3s for librosa)
+http://stackoverflow.com/questions/29125229/how-to-reinstall-ffmpeg-clean-on-ubuntu-14-04
+
+```bash
+sudo apt-get --purge remove ffmpeg
+sudo apt-get --purge autoremove
+
+sudo apt-get install ppa-purge
+sudo ppa-purge ppa:jon-severinsson/ffmpeg
+
+sudo add-apt-repository ppa:mc3man/trusty-media
+sudo apt-get update
+sudo apt-get dist-upgrade
+
+sudo apt-get install ffmpeg
+```
+
+update lasagne and theano to newest versions (see install dependancies)
+
+youll need to get the newest cuDNN (v5) form https://developer.nvidia.com/cudnn. register and download the linux archive
+"install" (taken from https://gist.github.com/joyofdata/11e936d0603dd7dd63f6)
+```bash
+scp -i  ~/.ssh/aws.pem ~/Downloads/cudnn.tar.gz ubuntu@ec2-52-17-84-162.eu-west-1.compute.amazonaws.com:/home/ubuntu/downloads
+
+gzip -d file.tar.gz
+tar xf file.tar
+
+echo -e "\nexport LD_LIBRARY_PATH=/home/ubuntu/cudnn-6.5-linux-x64-v2:$LD_LIBRARY_PATH" >> ~/.bashrc
+
+sudo cp cudnn.h /usr/local/cuda-7.0/include
+sudo cp libcudnn* /usr/local/cuda-7.0/lib64
+```
+
+The persistent (root) filesystem on the aws instance is only 12GB, of which a lot is taken up by python and some other preinstalled packages. id recommend removing caffe and torch if you dont plan to use them and keep the zipped mp3 samples in ~/downloads so you dont need to redownload it each time
+
+once booted you have an additional 60 GB of storage under /mnt folder (root access only) that gets wiped out on reboot. change the owner to ubuntu for easier access:
+```bash
+sudo chown -R ubuntu:ubuntu /mnt
+```
+
+extract the mp3s
+```bash
+unzip ~/downloads/mp3.zip -d /mnt/data/magna/
+```
+
+and remove the broken files
+```bash
+rm /mnt/data/magna/6/norine_braun-now_and_zen-08-gently-117-146.mp3
+rm /mnt/data/magna/8/jacob_heringman-josquin_des_prez_lute_settings-19-gintzler__pater_noster-204-233.mp3
+rm /mnt/data/magna/9/american_baroque-dances_and_suites_of_rameau_and_couperin-25-le_petit_rien_xiveme_ordre_couperin-88-117.mp3
+```
+
+to make theano run on gpu by default:
+```bash
+echo -e '[global]\nfloatX=float32\ndevice=gpu\n\n[lib]\ncnmem=0.9\n\n[nvcc]\nfastmath=True' > ~/.theanorc
+```
+
+
 
 # usage
