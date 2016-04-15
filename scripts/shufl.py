@@ -300,7 +300,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                 spectrogram = np.ndarray(
                         int(config['mel_x']) * int(config['mel_y']), np.float16)
                 spectrogram = spectrogram.reshape(
-                        -1, 1, int(config['mel_x']), int(config['mel_x']))
+                        -1, 1, int(config['mel_x']), int(config['mel_y']))
                 
                 found = False
                 with open(mels_path) as mels_f:
