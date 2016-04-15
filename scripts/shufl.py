@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys
 import os
 import time
+import ConfigParser
 
 import numpy as np
 import theano
@@ -17,6 +18,8 @@ import gensim
 import pickle
 import argparse
 
+config_path = 'config/shufl.cfg'
+
 mels_path = 'data/mels.pickle'
 tags_path = 'data/tags.pickle'
 clips_path = 'data/clips'
@@ -25,15 +28,6 @@ tags_test_path = 'data/tags-test.pickle'
 
 model_path = 'data/shufl.pickle'
 d2v_model_path = 'data/d2vmodel.doc2vec'
-
-# uncomment for running on aws
-#data_root = '/mnt/'
-#mels_path = data_root + mels_path
-#tags_path = data_root + tags_path
-#mels_test_path = data_root + mels_test_path
-#tags_test_path = data_root + tags_test_path
-#model_path = data_root + model_path
-#clips_path = data_root + clips_path
 
 # TODO: i think this is more like the bennanes network
 def build_cnn(input_var=None):
@@ -142,7 +136,7 @@ def it_minibatches(totalsize, batchsize, mels_f, tags_f):
         yield mel_data, tag_data
 
 
-def validate(val_fun):
+def validate(val_fun, config={}):
     # open pickle files for the test set
     mels_test_f = open(mels_test_path)
     tags_test_f = open(tags_test_path)
@@ -151,7 +145,10 @@ def validate(val_fun):
     test_err = 0
     test_acc = 0
     test_batches = 0
-    for batch in it_minibatches(1600, 100, mels_test_f, tags_test_f):
+    for inputs, targets in it_minibatches(
+            config['test_data'],
+            config['test_batchsize'], mels_f, tags_f):
+
         inputs, targets = batch
         err, acc, _ = val_fn(inputs, targets)
         test_err += err
@@ -171,7 +168,9 @@ def validate(val_fun):
 # more functions to better separate the code, but it wouldn't make it any
 # easier to read.
 
-def main(num_epochs=10, mode='train'):
+def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
+        production=False, config={}):
+
     # Load the dataset
     print("Loading data...")
 
@@ -211,12 +210,20 @@ def main(num_epochs=10, mode='train'):
 
     if mode == 'train':
         print("Entered training mode")
+
         # Compile a function performing a training step on a mini-batch (by giving
         # the updates dictionary) and returning the corresponding training loss:
         train_fn = theano.function([input_var, target_var], loss, updates=updates)
 
         # Finally, launch the training loop.
-        print("Starting training...")
+	if checkpoint is True: #load previously trained model
+            print("Continuing training from last epoch. Loading model..")
+            with open(model_path, 'r') as f:
+                params = pickle.load(f)
+
+            lasagne.layers.set_all_param_values(network, params)
+        else: # start training from scratch
+            print("Starting training from scratch...")
 
         # We iterate over epochs:
         for epoch in range(num_epochs):
@@ -229,7 +236,10 @@ def main(num_epochs=10, mode='train'):
             train_err = 0
             train_batches = 0
             start_time = time.time()
-            for inputs, targets in it_minibatches(18000, 500, mels_f, tags_f):
+            for inputs, targets in it_minibatches(
+                    int(config['train_data']),
+                    int(config['train_batchsize']), mels_f, tags_f):
+
                 train_err += train_fn(inputs, targets)
                 train_batches += 1
                 print(train_err)
@@ -238,7 +248,9 @@ def main(num_epochs=10, mode='train'):
             val_err = 0
             val_acc = 0
             val_batches = 0
-            for inputs, targets in it_minibatches(2000, 500, mels_f, tags_f):
+            for inputs, targets in it_minibatches(
+                    int(config['val_data']),
+                    int(config['val_batchsize']), mels_f, tags_f):
                 err, acc, _ = val_fn(inputs, targets)
                 val_err += err
                 val_acc += acc
@@ -271,8 +283,8 @@ def main(num_epochs=10, mode='train'):
         validate(val_fn)
     else:
         print("Entered user mode")
-        if args.clip_id is not None:
-            print("Calculating closest vectors for %s" % args.clip_id)
+        if track_id is not None:
+            print("Calculating closest vectors for %s" % track_id)
             with open(model_path, 'r') as f:
                 params = pickle.load(f)
 
@@ -280,17 +292,19 @@ def main(num_epochs=10, mode='train'):
             with open(clips_path, 'r') as f:
                 found = False
                 for line_no, line in enumerate(f, 0):
-                    if args.clip_id == line[:-1]:
+                    if track_id == line[:-1]:
                         found = True
                         break
 
             if found is True:
-                spectrogram = np.ndarray(599 * 128, np.float16)
-                spectrogram = spectrogram.reshape(-1, 1, 599, 128)
+                spectrogram = np.ndarray(
+                        int(config['mel_x']) * int(config['mel_y']), np.float16)
+                spectrogram = spectrogram.reshape(
+                        -1, 1, int(config['mel_x']), int(config['mel_x']))
                 
                 found = False
                 with open(mels_path) as mels_f:
-                    for i, mel in pickleLoader(mels_f, 21642):
+                    for i, mel in pickleLoader(mels_f, int(config['data'])):
                         if i == line_no:
                             found = True
                             spectrogram[0] = mel
@@ -298,11 +312,12 @@ def main(num_epochs=10, mode='train'):
 
                 if found is False:
                     print("Could not find cached mel spectrum for %s" % \
-                            args.clip_id)
+                            track_id)
                 else:
                     lasagne.layers.set_all_param_values(network, params)
 
-                    tag_zeros = np.ndarray((1, 40), np.float16)
+                    tag_zeros = np.ndarray(
+                            (1, int(config['latent_v'])), np.float16)
                     _, _, tag_prediction = val_fn(spectrogram, tag_zeros)
                     d2v_model = gensim.models.Doc2Vec.load(d2v_model_path)
 
@@ -325,10 +340,7 @@ def main(num_epochs=10, mode='train'):
                     np.take(arr, top10, out=result)
                     print(result['id'])
             else:
-                print(args.clip_id, " not found")
-
-
-
+                print(track_id, " not found")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='GI15 2016 - Shufl')
@@ -337,9 +349,13 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--mode', metavar='<mode>',
             help='Set to `train` for training, `val` for validating. ' + \
                     '`user` for user mode (Default `train`)')
-    parser.add_argument('-c', '--clip-id',
-            help='Return the closest vectors for a specific clip id from ' + \
+    parser.add_argument('-t', '--track-id',
+            help='Return the closest vectors for a specific track id from ' + \
                     'the MagnaTagATune dataset')
+    parser.add_argument('-c', '--checkpoint', action='store_true',
+            help='Continue training from the last epoch checkpoint')
+    parser.add_argument('-p', '--production', action='store_true',
+            help='Load training specific options appropriate for production')
 
     args = parser.parse_args()
 
@@ -348,5 +364,23 @@ if __name__ == '__main__':
         kwargs['num_epochs'] = args.epochs
     if args.mode is not None:
         kwargs['mode'] = args.mode
+    if args.track_id is not None:
+        kwargs['track_id'] = args.track_id
+    if args.checkpoint is not None:
+        kwargs['checkpoint'] = args.checkpoint
+    if args.production is not None:
+        kwargs['config'] = args.production
+
+    config = ConfigParser.RawConfigParser()
+    config.read(config_path)
+
+    if args.production is True:
+        print('Loading production configuration')
+        cfg = config._sections['production']
+    else:
+        print('Loading local configuration')
+        cfg = config._sections['local']
+
+    kwargs['config'] = cfg
 
     main(**kwargs)
