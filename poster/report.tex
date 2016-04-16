@@ -47,20 +47,23 @@
     Traditional content recommendation systems rely on user usage data to make
     decisions. Behavior patterns between users, are used by collaborative
     filtering methods to make recommendations about various types of content.
-    However, collaborative filtering suffers from the cold start problem.
-    Latent factor vectors are compact representations of the user's preferences
-    correlated with other characteristics of the items. Predicting these
-    vectors for new music content based only on metadata such as the artist's
-    name is often impossible. Using audio content to predict latent factor
+    However, collaborative filtering suffers from the cold start, i.e. ability
+    to recommend under the lack of usage data such as user's music taste or
+    songs frequently listened together.
+    \noindent
+    Latent vectors can be used as compact representation of the user's
+    preferences correlated with other characteristics of the items. Predicting
+    these vectors for new music content based only on metadata such as the artist's
+    name or album is often impossible. Using audio content to predict latent factor
     vectors can bridge the semantic gap between the characteristics of an audio
     track and the user's preferences. A\"{a}ron van den Oord et al.
     \cite{deep-content-based-music-recommendation} converted existing usage
-    data, present in the MagnaTagATune dataset, to the latent vector space
+    data, present in the Million Song Dataset (MSD), to the latent vector space
     using Weighted Matrix Factorization and trained a CNN using these vectors
     to minimize the Mean Squared Error of the predicted latent vectors of audio
     samples. Visualization of their qualitative evaluation is depicted in
-    Figure 1. In order to train their CNN, they used the Million Song Dataset
-    a by far larger dataset than the MagnaTagATune dataset that we used.
+    Figure 1. In order to train their CNN, they used the Million Song Dataset,
+    a much larger collection than the MagnaTagATune dataset that we used.
 
     \begin{figure}
       \centering
@@ -68,61 +71,91 @@
         \includegraphics[
           width=12cm,height=12cm,keepaspectratio]{latent-space-visualization.png}}}
       \caption{Visualization of the artist classification using latent factors
-        predicted from audio (
-        \url{http://benanne.github.io/images/prentje\_nips.png})}
+        predicted from audio \cite{deep-content-based-music-recommendation}}
     \end{figure}
 
   \section{Dataset}
-    In order to train the CNN, we used the MagnaTagATune dataset, which was
-    made available by the Magnatune label for the research community. The
-    data was collected using the TagATune game where users annotated audio
-    tracks with audio relevant tags.
+    In order to train the CNN and tag based model, we used the MagnaTagATune
+    dataset, which was made available by the Magnatune label for the research
+    community. The data was collected using the TagATune game where users
+    annotated audio tracks with audio relevant tags.
     \\ \\
     \noindent
-    The dataset consists of approximately 26,000 of 29 seconds music clips
+    The dataset consists of approximately 26,000 29 seconds long music samples
     encoded in 16 kHz, 32kbps, mono mp3, generously contributed by John
-    Buckman, the founder of every MIR researcher's favorite label Magnatune.
+    Buckman, the founder of every MIR researcher's favorite label - Magnatune.
     Each of them is annotated with a combination of 188 tags such as
-    "orchestral", "orchestra", "punk", "slow", "blues", "rock" etc. It also
+    "orchestral", "classical", "punk", "slow", "blues", "rock" etc. It also
     contains music similarity annotations in the form of triples where given a
     triple of songs (A, B, C), metrics of how many players have flagged the
-    song A, B or C as most different from the others. While preprocessing the
-    dataset to build the latent vector space representation of the tags and 
-    extract the mel spectrograms of the samples we found that approximately
-    5000 samples had zero tag annotations and 3 of the mp3 excerpts were zero
-    bytes long, which as explained in the implementation details section we
-    had to exclude from the final training dataset \cite{magnatagatune}.
+    song A, B or C as most different from the others.
+    \\ \\
+    \noindent
+    While preprocessing the dataset to build the latent vector space
+    representation of the tags and extract the mel spectrograms of the samples
+    we found that approximately 5000 samples had zero tag annotations and 3 of
+    the mp3 clips were 0 bytes long, which as explained in the implementation
+    details section we had to exclude from the final training dataset
+    \cite{magnatagatune}.
 
   \section{Design architecture}
-    [describe word2vec]
-
-    [describe CNN topology and how we parametrized it - mention that we tried
-    several rectifiers etc]
-
-    Our system needs to be able to suggest songs similar to that provided by
-    the user, based only on its audio sample. To achieve this goal we first
-    build a ground truth model using MagnaTagATune dataset. Each song in the
-    database is annotated by users with multiple tags that we treat as ``bag of
-    words'' meaning only the presence and count of a tag matters and but its
-    position. We will run word2vec algorithm using gensim Python toolkit on
-    this dataset to produce latent vector representation of each song. We will
-    then build a Convolutional Neural Network taking frequency spectrum of an
-    audio sample as input and outputting latent vector representation. The
-    Network will be trained to minimize the MSE of the predictions with the
-    ground truth model. We will use compressed mel-spectograms of the audio
-    samples to form compressed time-frequency representations and use them to
-    train our CNN. The samples will overlap in time. We will experiment with
-    the depth and size of the network. Figure 2 shows possible configuration
-    with three convolutional layers and three fully connected layers.
+    Due to our prior lack of experience in the field we decided to follow
+    and later vary an existing and tested to be working CNN architecture, in
+    particular that described by Sander Dieleman in his blog post
+    \cite{spotify-dieleman}
+    \\ \\
+    \noindent    
+    In particular in order to be able to suggest songs similar to that provided
+    by the user we rely solely on the audio content of the supplied track.
+    \\ \\
+    \noindent
+    The exact format used as an input is a mel spectrogram of a 29 s long sample
+    of the track. Spectrogram captures how the frequency spectrum of the clip
+    changes in time by performing fourier transform on short (order of ms),
+    overlapping windows. The frequency is log scaled (using mel scale) to reduce
+    the dimensionality which speeds up the network training phase.
+    \\ \\
+    \noindent
+    We fed the spectrograms into a neural network consisting of 3 convolutional
+    layers that learn to extract time dependent features interleaved with
+    max pooling layers that reduce the time dimension for faster learning and
+    add invariance so that small changes in the exact position of the feature
+    do not matter. After the convolutional layers, two fully connected, global
+    pooling (dense) layers are included to gather statistics about the learned
+    filters across the full time dimension as overall in order to classify a
+    song the exact position of the features should not matter as much as the
+    fact that they are present. Finally, the output layer returns the latent
+    vector representation of the song.
+    \\ \\
+    \noindent
+    The network is trained to minimise the mean squared error between the
+    prediction (output of the network) and ground truth data obtained from
+    a separate, tag based model. To build the latent representation from the
+    tags we use doc2vec which is an extension to word2vec algorithm that treats
+    the set of user annotations for a particular clip as ``bag of words'' and 
+    projects them into one multidimensional space. We chose this model as it
+    provides needed functionality and hides all the details so we can focus
+    on the neural network implementation.
+    \\ \\
+    \noindent
+    The CNN layers are depicted in Figure 2. The first layer shows the
+    spectrogram with the red rectangles depicting the convolutions. The red
+    triangles represent the downsampling by max pooling. We used pool size
+    of 4x1 between the first and second layer for greater dimension reduction
+    and size of 2x1 between the rest of layers. Max pool of size 4x1 means that
+    we look at a particular frequency bin in 4 consequtive time frames and keep
+    only the maximum value from the set of values in the pool. We did not
+    include the L2 normalization global pooling as we could not manage to
+    implement it.
 
     \begin{figure}
       \centering
       \rotatebox{0}{\scalebox{1}{
         \includegraphics[
           width=12cm,height=12cm,keepaspectratio]{cnn-architecture.png}}}
-      \caption{One of the convolutional neural network architectures Dieleman
-        experimented with, on which our design decisions are based as well
-        (\url{ http://benanne.github.io/images/spotify\_convnet.png}).}
+      \caption{Neural network architecture we implemented that closely follows
+        one of the architectures Dieleman experimented with.
+        (\url{ http://benanne.github.io/images/spotify\_convnet.png})}
     \end{figure}
 
   \section{Implementation Details}
