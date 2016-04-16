@@ -301,7 +301,9 @@
     finding combinations of the instrument with cello.
 
     \begin{Verbatim}[xleftmargin=.5in]
-    query: CLIP_94 'novoice','classical','strings','violin','cello','soft'
+    query: CLIP_94 'novoice','classical','strings',
+        'violin','cello','soft'
+
     CLIP_18510 'classical','strings','violin'
     CLIP_17131 'classical','strings','violin'
     CLIP_42243 'classical','strings','violin'
@@ -325,7 +327,8 @@
     instrumental music on the bottom half the list.
 
     \begin{Verbatim}[xleftmargin=.5in]
-    query: CLIP_188'heavy','guitar','loud','heavy_metal','man','rock','metal'
+    query: CLIP_188'heavy','guitar','loud','heavy_metal',
+        'man','rock','metal'
     CLIP_26669 'rock','metal'
     CLIP_37278 'dance','techno','beat'
     CLIP_41027 'drums','electronic','fast','techno','beat'
@@ -367,7 +370,12 @@
     to include enough samples for the model to learn a great variety of
     filters. Going for larger datasets like the 1 Million Song dataset was
     definitely not a reasonable option, as a full training session for such a
-    dataset would take days instead of several hours that our model did.
+    dataset would take days instead of several hours that our model did. We
+    found that our model is able to predict certain harmonics mostly of
+    instrumental tracks while being less smart when it comes for loud and more
+    complex sounds. We believe the nature of the dataset played a crucial role
+    in our results, but in the interest of time this was the most feasible
+    approach we could follow.
     \\ \\
     \noindent
     Being able to classify music in the latent vector space without having
