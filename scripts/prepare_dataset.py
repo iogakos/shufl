@@ -84,7 +84,7 @@ for row in tags_list[1:]:
         spectrum = spectrum.transpose()
 
         tags_vector = model.docvecs[clip_id]
-        tags_vector = np.add(tags_vector, minn)
+        tags_vector = np.add(tags_vector, np.abs(minn))
 
         # Write nparrays in pickle files. For each file, its tag vector and mel
         # spec nparrays MUST be in the same line number on the train files
