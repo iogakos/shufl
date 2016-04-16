@@ -42,7 +42,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.Conv2DLayer(
             network, num_filters=256, filter_size=(4, 128),
             nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.GlorotUniform())
+            W=lasagne.init.Normal())
     # Expert note: Lasagne provides alternative convolutional layers that
     # override Theano's choice of which implementation to use; for details
     # please see http://lasagne.readthedocs.org/en/latest/user/tutorial.html.
