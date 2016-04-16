@@ -20,6 +20,7 @@ import argparse
 
 config_path = 'config/shufl.cfg'
 
+tags_file = 'data/tags'
 mels_path = 'data/mels.pickle'
 tags_path = 'data/tags.pickle'
 clips_path = 'data/clips'
@@ -359,9 +360,16 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                     real = d2v_model.docvecs[args.track_id]
                     real = np.add(real, np.abs(minn))
 
-                    print('predict\t\treal\t\tdiff')
+                    print('predict\t  real\t    diff')
                     for idx, v in np.ndenumerate(tag_prediction[0]):
-                        print("{:1.6f}".format(v) + '\t' + "{:10.4f}".format(real[idx]) + '\t' + "{:10.4f}".format(v-real[idx]))
+                        print("{:1.6f}".format(v) + "{:10.6f}".format(real[idx]) + "{:10.6f}".format(v-real[idx]))
+
+                    #create clip_id->tags dictionary
+                    tags_dict = dict()
+                    with open(tags_file, "r") as f:
+                        for index, line in enumerate(f):
+                            tags = line.split()
+                            tags_dict[tags[0]] = tags[1:]
 
                     # iterate over the d2v dictionary and find the maximally
                     # similar songs by calculating the euclidian distance to
@@ -380,7 +388,8 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                             (10,), dtype=[('dist','float32'),('id','|S10')])
 
                     np.take(arr, top10, out=result)
-                    for r in result['id']: print(r)
+                    for r in result['id']:
+                        print(r + ' ' + str(tags_dict[r[5:]]).replace(' ','').replace('.','').replace('[','').replace(']',''))
             else:
                 print(track_id, " not found")
 
