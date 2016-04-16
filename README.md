@@ -335,9 +335,9 @@ test_batchsize=10
 
 `-s` controls shuffling of the training data as they are being fed in the
 InputLayer. Shuffling helps the model tackle the problem of moving too fast
-towards specific patterns occuring in the dataset. The MagnaTagATune dataset is
+towards specific patterns occuring in the dataset. The MagnaTagATune dataset
 contains multiple samples of the same track/artist in alphabetical order, so we
-wanted to avoid the rich of our model learning filters that might contain bias
+wanted to avoid our model learning filters that might contain bias
 towards specific instruments for example, which would make it hard for the
 network to move away from a genre while going through the training dataset.
 Shuffling introduces a tradeoff between the quality of the learnt filters and
