@@ -159,6 +159,16 @@
     various time frame sizes and deciding on the exact CNN layer architecture,
     for example how many fully connected layers does our model need.
   \section{Conclusion}
+    We believe we approached the problem of cold start for music recommendation
+    the right way, by training a CNN to learn filters based on the frequency
+    spectrum of a track and its representation in the latent vactor space. In
+    the interest of time and computational resources available, we had to make
+    a lot of compromises with the most effective one being the used dataset.
+    Though being a great resource, the MagnaTagATune dataset seems not to
+    include enough samples for the model to learn a great variety of filters.
+    Going for larger datasets like the 1 Million Song dataset was definitely
+    not a reasonable option, as a full training session for such a dataset
+    would take days instead of several hours that our model did.
 
   \begin{thebibliography}{9}
     \sf
