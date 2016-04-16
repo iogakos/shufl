@@ -33,17 +33,17 @@
     Spotify.
     \\ \\
     \noindent
-    Our main objective is to build a system that addresses the cold start
-    problem for both new users and music content. The users give a single
-    preferred track as input, based on which a shuffled playlist with similar
-    music is generated. Newly imported music content, without previous usage
-    related feedback, can be classified based solely on its frequency spectrum.
-    It is achieved by propagating the spectrum through a CNN trained to predict
-    latent representations obtained from a separate, tag based model. The tags
-    and audio samples were obtained from MagnaTagATune open dataset consisting
+    We built a system that addresses the cold start problem for both new users
+    and music content. The users give a single preferred track as input, based
+    on which a shuffled playlist with similar music is generated. Newly
+    imported music content, without previous usage related feedback, can be
+    classified based solely on its frequency spectrum. It is achieved by
+    propagating the spectrum through a CNN trained to predict latent
+    representations obtained from a separate, tag based model. The tags and
+    audio samples were obtained from the MagnaTagATune open dataset consisting
     of 26,000 user annotated audio clips.
 
-  \section{Problem}
+  \section{Related Work}
     Traditional content recommendation systems rely on user usage data to make
     decisions. Behavior patterns between users, are used by collaborative
     filtering methods to make recommendations about various types of content.
@@ -53,12 +53,14 @@
     vectors for new music content based only on metadata such as the artist's
     name is often impossible. Using audio content to predict latent factor
     vectors can bridge the semantic gap between the characteristics of an audio
-    track and the user's preferences. A\"{a}ron van den Oord et al. converted
-    existing usage data, present in the MagnaTagATune dataset, to the latent
-    vector space using Weighted Matrix Factorization and trained a CNN using
-    these vectors to minimize the Mean Squared Error of the predicted latent
-    vectors of audio samples. Visualization of their qualitative evaluation is
-    depicted in Figure 1.
+    track and the user's preferences. A\"{a}ron van den Oord et al.
+    \cite{deep-content-based-music-recommendation} converted existing usage
+    data, present in the MagnaTagATune dataset, to the latent vector space
+    using Weighted Matrix Factorization and trained a CNN using these vectors
+    to minimize the Mean Squared Error of the predicted latent vectors of audio
+    samples. Visualization of their qualitative evaluation is depicted in
+    Figure 1. In order to train their CNN, they used the Million Song Dataset
+    a by far larger dataset than the MagnaTagATune dataset that we used.
 
     \begin{figure}
       \centering
@@ -70,10 +72,9 @@
         \url{http://benanne.github.io/images/prentje\_nips.png})}
     \end{figure}
 
-  \section{Related Work}
-  \section{About the dataset}
-    In order to train the CNN, we are using the MagnaTagATune dataset, which
-    was made available by the Magnatune label for the research community. The
+  \section{Dataset}
+    In order to train the CNN, we used the MagnaTagATune dataset, which was
+    made available by the Magnatune label for the research community. The
     data was collected using the TagATune game where users annotated audio
     tracks with audio relevant tags.
     \\ \\
@@ -85,9 +86,19 @@
     "orchestral", "orchestra", "punk", "slow", "blues", "rock" etc. It also
     contains music similarity annotations in the form of triples where given a
     triple of songs (A, B, C), metrics of how many players have flagged the
-    song A, B or C as most different from the others. \cite{msd-dataset}
+    song A, B or C as most different from the others. While preprocessing the
+    dataset to build the latent vector space representation of the tags and 
+    extract the mel spectrograms of the samples we found that approximately
+    5000 samples had zero tag annotations and 3 of the mp3 excerpts were zero
+    bytes long, which as explained in the implementation details section we
+    had to exclude from the final training dataset \cite{magnatagatune}.
 
   \section{Design architecture}
+    [describe word2vec]
+
+    [describe CNN topology and how we parametrized it - mention that we tried
+    several rectifiers etc]
+
     Our system needs to be able to suggest songs similar to that provided by
     the user, based only on its audio sample. To achieve this goal we first
     build a ground truth model using MagnaTagATune dataset. Each song in the
@@ -204,6 +215,9 @@
       Lamere. \emph{The Million Song Dataset}. In Proceedings of the 12th
       International Society for Music Information Retrieval Conference (ISMIR
       2011), 2011.
+    \bibitem{magnatagatune}
+      Magnatune label, The MagnaTagATune Dataset, \url{
+      http://mirg.city.ac.uk/codeapps/the-magnatagatune-dataset}
     \bibitem{cs231n}
       CS231n Convolutional Neural Networks for Visual Recognition,
       \url{http://cs231n.github.io/}
