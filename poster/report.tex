@@ -114,7 +114,16 @@
     of the track. Spectrogram captures how the frequency spectrum of the clip
     changes in time by performing fourier transform on short (order of ms),
     overlapping windows. The frequency is log scaled (using mel scale) to reduce
-    the dimensionality which speeds up the network training phase.
+    the dimensionality which speeds up the network training phase. We have
+    experimented with different settings for the spectorgram parameters. Figure
+    2 shows two spectrograms of the same song one with windows size of 512
+    samples and one with 3072 samples. It can be seen that the smaller window
+    results in better time resolution and more blured frequency, where the
+    larger window has better frequency resolution, which can be seen especially
+    for low frequencies, but is more blured in time domain. The size of the
+    window also determines the number of frames needed to represent the audio
+    clip and we have chosen window of size 3116 as it produced the same number
+    of frames as in Dieleman architecture.
     \\ \\
     \noindent
     We fed the spectrograms into a neural network consisting of 3 convolutional
@@ -139,7 +148,7 @@
     on the neural network implementation.
     \\ \\
     \noindent
-    The CNN layers are depicted in Figure 2. The first layer shows the
+    The CNN layers are depicted in Figure 3. The first layer shows the
     spectrogram with the red rectangles depicting the convolutions. The red
     triangles represent the downsampling by max pooling. We used pool size
     of 4x1 between the first and second layer for greater dimension reduction
@@ -154,6 +163,15 @@
     predicted latent representation of the input song to all of the clips
     present in our dataset and choose the top ten results that we present to
     the user along with their corresponding tags.
+
+    \begin{figure}
+      \centering
+      \rotatebox{0}{\scalebox{1}{
+        \includegraphics[
+          width=12cm,height=12cm,keepaspectratio]{spectrograms.png}}}
+      \caption{Comparison of spectrograms with window size of 512 samples
+          (left) and 3072 samples (right)}
+    \end{figure}
 
     \begin{figure}
       \centering
@@ -276,6 +294,7 @@
     CLIP_51680 'classical','strings','violin','cello'
     \end{Verbatim}
 
+    \noindent
     We present the same effect from another clip that contains both violin and
     cello and for clarity we suppressed the vector distances. The model seems to
     be able to understand the violin's harmonics but is not that fluent with
@@ -293,6 +312,30 @@
     CLIP_2544 'classical','strings','violin'
     CLIP_27686 'classical','strings','violin'
     CLIP_51984 'classical','strings','violin','cello'
+    \end{Verbatim}
+
+    \noindent
+    On the other hand, we find the network struggles in understanding frequency
+    spectrums of loud and fast music such as heavy metal. We believe this is
+    because of the nature of the dataset of mostly containing instrumental and
+    classical music. For example, 4395 out of ~26000 tracks contain the tag
+    'classical' whereas only 522 of them contain the tag 'metal' (276 contain the
+    tag 'heavy'). This effect is present in the following query, where the list
+    contains very few 'rock' and 'metal' tracks, while being biased against
+    instrumental music on the bottom half the list.
+
+    \begin{Verbatim}[xleftmargin=.5in]
+    query: CLIP_188'heavy','guitar','loud','heavy_metal','man','rock','metal'
+    CLIP_26669 'rock','metal'
+    CLIP_37278 'dance','techno','beat'
+    CLIP_41027 'drums','electronic','fast','techno','beat'
+    CLIP_26694 'rock','metal'
+    CLIP_51984 'classical','strings','violin','cello'
+    CLIP_53212 'classical','strings','violin','cello'
+    CLIP_48219 'electronic','fast','techno','beat'
+    CLIP_51680 'classical','strings','violin','cello'
+    CLIP_54825 'classical','strings','violin','cello'
+    CLIP_6862 'classical','violins','strings'
     \end{Verbatim}
 
   \section{Time Constraints}
