@@ -21,7 +21,7 @@ Finally a convolutional neural network that follows Sander Dieleman's
 architecture is built and trained with Theano and Lasagne on an Amazon AWS GPU
 instance.
 
-#Instalation
+#Installation
 These instructions are for a computer running MAC OS X and assume no previous
 python development present.
 
@@ -256,7 +256,7 @@ This script generated the following files briefly explained below:
 
 Having prepared the dataset we are now ready to move to training and evaluation
 using the `shufly.py` script. Following we show different execution modes
-supported by the utility, and we later explain each of the flags futher:
+supported by the utility, and we later explain each of the flags further:
 ```
 [ioannisgakos|scripts] python shufl.py -h
 usage: shufl.py [-h] [-e N] [-m <mode>] [-t TRACK_ID] [-c] [-p] [-s]
@@ -278,5 +278,105 @@ optional arguments:
   -s, --shuffle         Shuffle the training data (caution: loads the whole
                         datas in memory)
 ```
+`-e` controls how many epochs the network will go through while training. As a
+note, we trained our model using 21600 samples on an EC2 instance equipped
+with a GPU, where each epoch took ~40s resulting in 200 epochs training in
+~2.5h.
 
+`-m` controls the execution mode. `train` mode starts training assuming the
+already prepared dataset exists. `val` mode enters validation mode, which means
+no training is applied, only the validation dataset is fed in the network.
+`user` mode is used to fetch the closest predictions of clip id based on an
+already trained model. The `user` mode must be followed by the `-t` flag which
+defines the target clip id in `CLIP_X` format, where `X` is the id of the track
+in the MagnaTagATune dataset.
 
+At the end of each training epoch, `shufl.py` saves the parameters of a
+trained model under `data/shufl.pickle`. The `-c` flag provides a checkpoint
+support, which when used continues training of the model from the last
+persisted epoch.
+
+In order to train the fully fledged model, we set up an EC2 instance on AWS so
+we incorporated production environment support with the `-p` flag, to easily
+switch between development and production environment. The environments are
+being configured but a configuration file under `config/shufl.cfg` and
+following is the config file we used
+```
+[production]
+data = 21642  # the total number of training/validation/test samples
+mel_x = 599   # the length of the time domain of the mel spectrograms
+mel_y = 128   # the number of frequency bins for each sample
+latent_v = 40 # the size of the latent vector (1,40)
+
+epochs = 200   # number of training epochs
+train_data = 18000  # number of training samples
+val_data = 2000     # number of validation samples
+test_data = 1600    # number of test samples
+
+train_batchsize = 500 # training minibatch size
+val_batchsize = 500   # validation minibatch size
+test_batchsize = 100  # test minibatch size
+
+[local]
+data=1000
+mel_x=599
+mel_y=128
+latent_v=40
+
+epochs=2
+train_data = 800
+val_data = 100
+test_data = 100
+
+train_batchsize=100
+val_batchsize=10
+test_batchsize=10
+```
+
+`-s` controls shuffling of the training data as they are being fed in the
+InputLayer. Shuffling helps the model tackle the problem of moving too fast
+towards specific patterns occuring in the dataset. The MagnaTagATune dataset is
+contains multiple samples of the same track/artist in alphabetical order, so we
+wanted to avoid the rich of our model learning filters that might contain bias
+towards specific instruments for example, which would make it hard for the
+network to move away from a genre while going through the training dataset.
+Shuffling introduces a tradeoff between the quality of the learnt filters and
+memory requirements, as it requires loading the whole dataset in memory which
+is about ~6Gb of deserialized vectors, assuming a production environment. We
+tackled this issue on the EC2 instance where we were capable of loading the
+whole dataset in memory.
+
+Having built this utility, we can easily switch between training and validation
+modes and some basic examples are provided below, again assuming a local
+execution environment.
+
+By default, given no flags, `shufl.py` trains a model using configuration
+parameters for a local execution environment, starting training from scratch
+with no shuffling:
+```
+[ioannisgakos|scripts] python shufl.py -e 200
+Loading local configuration
+Loading data...
+Building model and compiling functions...
+Entered training mode
+Starting training from scratch...
+Epoch 1 of 200 took 57.074s
+  training loss:    0.175772
+  validation loss:    0.150191
+  validation accuracy:    84.98 %
+Saving model...
+Epoch 2 of 200 took 60.318s
+  training loss:    0.170642
+  validation loss:    0.143875
+  validation accuracy:    85.61 %
+Saving model...
+...
+```
+
+In order to execute `shufl.py` in a production environment you can use the
+following command
+```bash
+nohup python -u shufl.py --production -m train -s > log.txt.1 2> log.err.1 < /dev/null &
+```
+This will spawn a process redirecting output to a non-tty, allowing you to
+terminate an SSH session without kill the training process.
