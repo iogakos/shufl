@@ -97,7 +97,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(network, p=.5),
             num_units=40,
-            nonlinearity=lasagne.nonlinearities.rectify)
+            nonlinearity=lasagne.nonlinearities.elu)
 
     return network
 
@@ -205,7 +205,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
 
     # Create a loss expression for training, i.e., a scalar objective we want
     # to minimize, i.e mean square error):
-    prediction = lasagne.layers.get_output(network)
+    prediction = lasagne.layers.get_output(network, deterministic=(mode=='user'))
     loss = lasagne.objectives.squared_error(prediction, target_var)
     loss = loss.mean()
 
@@ -214,7 +214,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
     # Descent (SGD) with Nesterov momentum, but Lasagne offers plenty more.
     params = lasagne.layers.get_all_params(network, trainable=True)
     updates = lasagne.updates.nesterov_momentum(
-            loss, params, learning_rate=0.001, momentum=0.9)
+            loss, params, learning_rate=0.005, momentum=0.9)
 
     # Create a loss expression for validation/testing. The crucial difference
     # here is that we do a deterministic forward pass through the network,
