@@ -388,6 +388,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                             (10,), dtype=[('dist','float32'),('id','|S10')])
 
                     np.take(arr, top10, out=result)
+                    print ('query: ' + track_id + str(tags_dict[track_id[5:]]).replace(' ','').replace('.','').replace('[','').replace(']',''))
                     for r in result['id']:
                         print(r + ' ' + str(tags_dict[r[5:]]).replace(' ','').replace('.','').replace('[','').replace(']',''))
             else:
