@@ -273,14 +273,14 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
             with open(model_path, 'w') as f:
                 pickle.dump(params, f)
 
-        validate(val_fn)
+        validate(val_fn, config)
     elif mode == 'val':
         print("Entered validation mode")
         with open(model_path, 'r') as f:
             params = pickle.load(f)
 
         lasagne.layers.set_all_param_values(network, params)
-        validate(val_fn)
+        validate(val_fn, config)
     else:
         print("Entered user mode")
         if track_id is not None:
@@ -338,7 +338,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                             (10,), dtype=[('dist','float32'),('id','|S10')])
 
                     np.take(arr, top10, out=result)
-                    print(result['id'])
+                    for r in result['id']: print(r)
             else:
                 print(track_id, " not found")
 
