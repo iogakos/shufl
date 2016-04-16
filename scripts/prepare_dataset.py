@@ -44,6 +44,10 @@ clips_file = open(clips_path, 'w')
 # load tags model
 model = gensim.models.Doc2Vec.load(model_path)
 
+#find minimum value in the whole model, will add it to every value to shift the
+#model to contain only positive valuse
+minn = np.amin(np.array([model.docvecs[c] for c in model.docvecs.doctags.keys()]).flatten())
+
 # mel spec properties
 stft_window = 3116
 hop = stft_window / 4
@@ -80,7 +84,7 @@ for row in tags_list[1:]:
         spectrum = spectrum.transpose()
 
         tags_vector = model.docvecs[clip_id]
-        tags_vector = np.add(tags_vector, np.abs(tags_vector.min()))
+        tags_vector = np.add(tags_vector, minn)
 
         # Write nparrays in pickle files. For each file, its tag vector and mel
         # spec nparrays MUST be in the same line number on the train files
