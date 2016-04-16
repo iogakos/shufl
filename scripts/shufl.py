@@ -321,13 +321,25 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                     _, _, tag_prediction = val_fn(spectrogram, tag_zeros)
                     d2v_model = gensim.models.Doc2Vec.load(d2v_model_path)
 
+                    # find minimum value among all vectors
+                    minn = np.amin(np.array([d2v_model.docvecs[c] for c in d2v_model.docvecs.doctags.keys()]).flatten())
+
+                    # get the real representation and modify according to our
+                    # model i.e. by elementwise adding global minimum
+                    real = d2v_model.docvecs[args.track_id]
+                    real = np.add(real, np.abs(minn))
+
+                    print('predict\t\treal\t\tdiff')
+                    for idx, v in np.ndenumerate(tag_prediction[0]):
+                        print("{:1.6f}".format(v) + '\t' + "{:10.4f}".format(real[idx]) + '\t' + "{:10.4f}".format(v-real[idx]))
+
                     # iterate over the d2v dictionary and find the maximally
                     # similar songs by calculating the euclidian distance to
                     # each
                     values = [
                         tuple([
                             np.linalg.norm(
-                            tag_prediction-d2v_model.docvecs[clip]),clip])
+                            tag_prediction-np.add(d2v_model.docvecs[clip], np.abs(minn))),clip])
                             for clip in d2v_model.docvecs.doctags.keys()]
 
                     arr = np.array(
