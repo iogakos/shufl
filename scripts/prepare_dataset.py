@@ -62,9 +62,6 @@ for row in tags_list[1:]:
     # extract mel spec from sample
     sample_filename = os.path.join(os.getcwd(), magna_dir, row[-1])
 
-    clips_file.write(''.join(s for s in [clip_id, '\n']))
-    if args.clips_only is True: continue
-
     try:
         y, sr = librosa.load(sample_filename, sr=16000)
     except IOError:
@@ -72,6 +69,9 @@ for row in tags_list[1:]:
     except EOFError:
         print 'file broken: ' + row[-1]
     else:
+
+        clips_file.write(''.join(s for s in [clip_id, '\n']))
+        if args.clips_only is True: continue
 
         spectrum = librosa.feature.melspectrogram(
                 y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
