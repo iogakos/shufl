@@ -258,7 +258,7 @@ Having prepared the dataset we are now ready to move to training and evaluation
 using the `shufly.py` script. Following we show different execution modes
 supported by the utility, and we later explain each of the flags further:
 ```
-[ioannisgakos|scripts] python shufl.py -h
+$ python shufl.py -h
 usage: shufl.py [-h] [-e N] [-m <mode>] [-t TRACK_ID] [-c] [-p] [-s]
 
 GI15 2016 - Shufl
@@ -354,7 +354,7 @@ By default, given no flags, `shufl.py` trains a model using configuration
 parameters for a local execution environment, starting training from scratch
 with no shuffling:
 ```
-[ioannisgakos|scripts] python shufl.py -e 200
+$ python shufl.py -e 200
 Loading local configuration
 Loading data...
 Building model and compiling functions...
@@ -378,5 +378,45 @@ following command
 ```bash
 nohup python -u shufl.py --production -m train -s > log.txt.1 2> log.err.1 < /dev/null &
 ```
+
 This will spawn a process redirecting output to a non-tty, allowing you to
 terminate an SSH session without kill the training process.
+
+As stated above, `user` mode provides a means of evaluation a track as follows:
+```
+$ python shufl.py -m user -t CLIP_2
+
+query: CLIP_2 'classical','strings','opera','violin'
+CLIP_10204 'classical','strings','violin','cello'
+CLIP_51984 'classical','strings','violin','cello'
+CLIP_8713 'drums','electronic','fast','techno','beat'
+CLIP_54119 'classical','strings','violin','cello'
+CLIP_54125 'classical','strings','violin','cello'
+CLIP_51680 'classical','strings','violin','cello'
+CLIP_54825 'classical','strings','violin','cello'
+CLIP_41176 'classical','strings','violin','cello'
+CLIP_49620 'classical','guitar','strings'
+CLIP_54824 'classical','strings','violin','cello'
+```
+
+You can extract the clip ids using:
+```
+$ python shufl.py -m user -t CLIP_2 | grep -o 'CLIP_\d\+' | tr '\n' ' '
+CLIP_2 CLIP_53212 CLIP_10204 CLIP_51984 CLIP_41176 CLIP_51680 CLIP_54125 CLIP_49620 CLIP_37278 CLIP_33383 CLIP_54825 
+```
+
+And using the `clips2mp3.py` script fetch the filenames
+```
+$ python clips2mp3.py CLIP_2 CLIP_53212 CLIP_10204 CLIP_51984 CLIP_41176 CLIP_51680 CLIP_54125 CLIP_49620 CLIP_37278 CLIP_33383 CLIP_54825
+data/magna/f/american_bach_soloists-j_s__bach_solo_cantatas-01-bwv54__i_aria-30-59.mp3
+data/magna/c/vito_paternoster-cd1bach_sonatas_and_partitas_for_solo_violin-15-sonata_seconda_in_re_minore__andante-204-233.mp3
+data/magna/1/vito_paternoster-cd1bach_cello_suites-02-suite_i_in_sol_maggiore__allemande-88-117.mp3
+data/magna/c/vito_paternoster-cd1bach_sonatas_and_partitas_for_solo_violin-14-sonata_seconda_in_re_minore__fuga-291-320.mp3
+data/magna/2/vito_paternoster-cd2bach_cello_suites-09-suite_iv_in_mi_bemolle_maggiore__courante-59-88.mp3
+data/magna/9/vito_paternoster-cd2bach_sonatas_and_partitas_for_solo_violin-14-partita_terza_in_la_maggiore__bouree-30-59.mp3
+data/magna/1/vito_paternoster-cd1bach_cello_suites-16-suite_vi_in_re_magiore__sarabande-88-117.mp3
+data/magna/a/jacob_heringman-black_cow-13-bakfark_non_accedat_ad_te_malum_secunda_pars-320-349.mp3
+data/magna/d/processor-insomnia-08-shiraio_pig-117-146.mp3
+data/magna/9/vito_paternoster-cd2bach_sonatas_and_partitas_for_solo_violin-07-sonata_terza_in_fa_maggiore__fuga-552-581.mp3
+data/magna/1/vito_paternoster-cd1bach_cello_suites-17-suite_vi_in_re_magiore__gavotte_i_e_ii-59-88.mp3
+```
