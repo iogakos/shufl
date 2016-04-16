@@ -148,6 +148,13 @@
     include the L2 normalization global pooling as we could not manage to
     implement it.
 
+    \\ \\
+    \noindent
+    In order to make recommendations we calculate the euclidean distance of the
+    predicted latent representation of the input song to all of the clips
+    present in our dataset and choose the top ten results that we present to
+    the user along with their corresponding tags.
+
     \begin{figure}
       \centering
       \rotatebox{0}{\scalebox{1}{
@@ -207,27 +214,27 @@
     recomendations (thumbs up / down) that could be incorporated into the
     model.
     
-  \section{Discussion}
+  \section{Discussion and Conclusion}
+    We have designed and implemented a music recommendation system addressing
+    the yet to be solved cold start problem and along the way explored concepts
+    such as Convolutional Neural Networks, latent vector representations,
+    time-frequency analysis of audio data and Cloud Computing.
+
+    In the interest of time and computational resources available, we had to
+    make a lot of compromises with the most effective one being the used
+    dataset. Though being a great resource, the MagnaTagATune dataset seems not
+    to include enough samples for the model to learn a great variety of
+    filters. Going for larger datasets like the 1 Million Song dataset was
+    definitely not a reasonable option, as a full training session for such a
+    dataset would take days instead of several hours that our model did.
+
     Being able to classify music in the latent vector space without having
     usage data, can help companies in the industry of digital music
-    distribution take more sophisticated decisions for new audio content.
-    Having Dieleman's prototype description will help us make comparisons based
-    on the evaluation results of both systems, for example concerning the
-    granularity of the filters learnt. We expect the problem to be challenging
-    enough, especially when it comes on adjusting the overlapping samples in
-    various time frame sizes and deciding on the exact CNN layer architecture,
-    for example how many fully connected layers does our model need.
-  \section{Conclusion}
-    We believe we approached the problem of cold start for music recommendation
-    the right way, by training a CNN to learn filters based on the frequency
-    spectrum of a track and its representation in the latent vactor space. In
-    the interest of time and computational resources available, we had to make
-    a lot of compromises with the most effective one being the used dataset.
-    Though being a great resource, the MagnaTagATune dataset seems not to
-    include enough samples for the model to learn a great variety of filters.
-    Going for larger datasets like the 1 Million Song dataset was definitely
-    not a reasonable option, as a full training session for such a dataset
-    would take days instead of several hours that our model did.
+    distribution make more sophisticated decisions for new audio content which
+    will benefit everyone. Users will find more fresh content they would be not
+    able to find otherwise, new artists and albums will get discovered more
+    quickly and therefore companies will get what they want the most - more
+    money.
 
   \begin{thebibliography}{9}
     \sf
