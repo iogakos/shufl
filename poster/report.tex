@@ -148,6 +148,21 @@
   \section{Tests and Results}
 
   \section{Time Constraints}
+    Due to very busy end of term and other University comittments we had very
+    limited time to work on the project. The entire implementation including
+    the steep learning curve took us one week. Had we had more time we would
+    like to look further into why our CNN model is not learning to generalize.
+    One of the reasons could be a tiny architecture detail such as the choice
+    of nonlinearity for the activation function, dropout probablility or
+    learnig rate. Aternatively we suspect the very narrow range of values in
+    the latent representation obtained from doc2vec model could make it hard
+    for the network to learn the exact values. If that was the case
+    experimenting with different latent representation models could help.
+    Finally, we would like to create a web interface as oposed to current
+    command line and ability for the user to judge the relevance of
+    recomendations (thumbs up / down) that could be incorporated into the
+    model.
+    
   \section{Discussion}
     Being able to classify music in the latent vector space without having
     usage data, can help companies in the industry of digital music
