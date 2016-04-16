@@ -115,6 +115,36 @@
     \end{figure}
 
   \section{Implementation Details}
+    In order to facilitate building and training our the Convolutional Neural
+    Network we used the Lasagne, the most mature and active lightweight library
+    currently available in the community \cite{lasagne}. The library provides
+    already implemented layers such as 2D Convolutional and Fully connected
+    ones (DenseLayer) that we used in our implementation.
+    \\ \\
+    \noindent
+    Before training the network, we applied a lot of preprocessing on the
+    dataset we used resulting in a dataset of 21642 training, validation and 
+    testing samples. The preprocessing included exclusion of samples from the
+    dataset that had no tags attached in order to avoid pushing the training
+    towards overfitting on tracks with no feature information available.
+    \\ \\
+    \noindent
+    To move from tags to the latent vector space and this way build the ground
+    truth model, we used the Doc2Vec model that the network used to minimize
+    its predictions' error \cite{doc2vec}. In order to prepare samples for
+    training we used the librosa library \cite{librosa} to extract the mel
+    spectrograms of all of the samples included in the dataset, a rather time
+    consuming process.
+    \\ \\
+    \noindent
+    Our implementation provides a full working flow, meaning that it supports
+    all the steps from preprocessing the dataset up to the point of getting
+    a list of the 10 most similar tracks given as target a track from the
+    dataset. It also supports multiple execution environments based on the
+    computational power available. We did that because we needed to be able to
+    quickly switch from our local development environments to the production
+    one that we used for training, an EC2 instance equipped with a GPU in AWS.
+      
   \section{Tests and Results}
 
   \section{Time Constraints}
@@ -152,5 +182,11 @@
     \bibitem{cs231n}
       CS231n Convolutional Neural Networks for Visual Recognition,
       \url{http://cs231n.github.io/}
+    \bibitem{lasagne}
+      Lasagne, \url{https://github.com/Lasagne/Lasagne}
+    \bibitem{doc2vec}
+      Doc2Vec, gensim \url{https://radimrehurek.com/gensim/models/doc2vec.html}
+    \bibitem{librosa}
+      librosa, \url{https://github.com/bmcfee/librosa}
   \end{thebibliography}
 \end{document}
