@@ -84,7 +84,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(concat, p=.5),
             num_units=2048,
-            nonlinearity=lasagne.nonlinearities.rectify)
+            nonlinearity=lasagne.nonlinearities.softmax)
 
     # 2048-unit fully connected layer with 50% dropout on its inputs:
     network = lasagne.layers.DenseLayer(
@@ -96,7 +96,7 @@ def build_cnn(input_var=None):
     network = lasagne.layers.DenseLayer(
             lasagne.layers.dropout(network, p=.5),
             num_units=40,
-            nonlinearity=lasagne.nonlinearities.softmax)
+            nonlinearity=lasagne.nonlinearities.rectify)
 
     return network
 
@@ -267,7 +267,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
 
                 train_err += train_fn(inputs, targets)
                 train_batches += 1
-                print(train_err)
+                print(train_err/train_batches)
 
             # And a full pass over the validation data:
             val_err = 0
