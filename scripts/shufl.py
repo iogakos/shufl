@@ -118,22 +118,39 @@ def pickleLoader(f, batchsize):
 # own custom data iteration function. For small datasets, you can also copy
 # them to GPU at once for slightly improved performance. This would involve
 # several changes in the main program, though, and is not demonstrated here.
-def it_minibatches(totalsize, batchsize, mels_f, tags_f):
-    for cnt in range(0, totalsize, batchsize):
-        mel_data = np.ndarray(batchsize * 599 * 128, np.float32)
-        mel_data = mel_data.reshape(-1, 1, 599, 128)
+def it_minibatches(totalsize, batchsize, mels_f, tags_f, shuffle=False,
+        inputs=None, targets=None):
 
-        tag_data = np.ndarray((batchsize, 40), np.float32)
+    if shuffle is True:
+         
+        assert len(inputs) == len(targets)
 
-        for i, mel in pickleLoader(mels_f, batchsize):
-            mel_data[i][0] = mel
+        indices = np.arange(len(inputs))
+        np.random.shuffle(indices)
 
-        for i, tag_vector in pickleLoader(tags_f, batchsize):
-            tag_data[i] = tag_vector
+        for start_idx in range(0, len(inputs) - batchsize + 1, batchsize):
+            if shuffle:
+                excerpt = indices[start_idx:start_idx + batchsize]
+            else:
+                excerpt = slice(start_idx, start_idx + batchsize)
+            yield inputs[excerpt], targets[excerpt]
 
-        assert len(mel_data) == len(tag_data)
+    else:
+        for cnt in range(0, totalsize, batchsize):
+            mel_data = np.ndarray(batchsize * 599 * 128, np.float32)
+            mel_data = mel_data.reshape(-1, 1, 599, 128)
 
-        yield mel_data, tag_data
+            tag_data = np.ndarray((batchsize, 40), np.float32)
+
+            for i, mel in pickleLoader(mels_f, batchsize):
+                mel_data[i][0] = mel
+
+            for i, tag_vector in pickleLoader(tags_f, batchsize):
+                tag_data[i] = tag_vector
+
+            assert len(mel_data) == len(tag_data)
+
+            yield mel_data, tag_data
 
 
 def validate(val_fun, config={}):
@@ -147,7 +164,11 @@ def validate(val_fun, config={}):
     test_batches = 0
     for inputs, targets in it_minibatches(
             config['test_data'],
-            config['test_batchsize'], mels_f, tags_f):
+            config['test_batchsize'],
+            mels_f,
+            tags_f,
+            shuffle=shuffle,
+            inputs=mels_test_mem, targets=tags_test_mem):
 
         inputs, targets = batch
         err, acc, _ = val_fn(inputs, targets)
@@ -169,7 +190,7 @@ def validate(val_fun, config={}):
 # easier to read.
 
 def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
-        production=False, config={}):
+        production=False, shuffle=False, config={}):
 
     # Load the dataset
     print("Loading data...")
@@ -238,7 +259,11 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
             start_time = time.time()
             for inputs, targets in it_minibatches(
                     int(config['train_data']),
-                    int(config['train_batchsize']), mels_f, tags_f):
+                    int(config['train_batchsize']),
+                    mels_f,
+                    tags_f,
+                    shuffle=shuffle,
+                    inputs=mels_mem, targets=tags_mem):
 
                 train_err += train_fn(inputs, targets)
                 train_batches += 1
@@ -250,7 +275,12 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
             val_batches = 0
             for inputs, targets in it_minibatches(
                     int(config['val_data']),
-                    int(config['val_batchsize']), mels_f, tags_f):
+                    int(config['val_batchsize']),
+                    mels_f,
+                    tags_f,
+                    shuffle=shuffle,
+                    inputs=mels_val_mem, targets=tags_val_mem):
+
                 err, acc, _ = val_fn(inputs, targets)
                 val_err += err
                 val_acc += acc
@@ -368,8 +398,24 @@ if __name__ == '__main__':
             help='Continue training from the last epoch checkpoint')
     parser.add_argument('-p', '--production', action='store_true',
             help='Load training specific options appropriate for production')
+    parser.add_argument('-s', '--shuffle', action='store_true',
+            help='Shuffle the training data (caution: loads the whole ' + \
+                    'datas in memory)')
+
+
+    config = ConfigParser.RawConfigParser()
+    config.read(config_path)
 
     args = parser.parse_args()
+    if args.production is True:
+        print('Loading production configuration')
+        cfg = config._sections['production']
+    else:
+        print('Loading local configuration')
+        cfg = config._sections['local']
+
+    mels_mem = mels_val_mem = mels_test_meme = \
+        tags_mem = tags_val_mem = tags_test_mem = None
 
     kwargs = {}
     if args.epochs is not None:
@@ -382,16 +428,49 @@ if __name__ == '__main__':
         kwargs['checkpoint'] = args.checkpoint
     if args.production is not None:
         kwargs['config'] = args.production
+    if args.shuffle is not None:
+        kwargs['shuffle'] = args.shuffle
+    if args.shuffle is True:
+        mels_f = open(mels_path)
+        tags_f = open(tags_path)
 
-    config = ConfigParser.RawConfigParser()
-    config.read(config_path)
+        mels_mem = np.ndarray(int(cfg['train_data']) * 599 * 128, np.float32)
+        mels_mem = mels_mem.reshape(-1, 1, 599, 128)
 
-    if args.production is True:
-        print('Loading production configuration')
-        cfg = config._sections['production']
-    else:
-        print('Loading local configuration')
-        cfg = config._sections['local']
+        mels_val_mem = np.ndarray(int(cfg['val_data']) * 599 * 128, np.float32)
+        mels_val_mem = mels_val_mem.reshape(-1, 1, 599, 128)
+
+        mels_test_mem = np.ndarray(int(cfg['test_data']) * 599 * 128, np.float32)
+        mels_test_mem = mels_test_mem.reshape(-1, 1, 599, 128)
+
+        tags_mem = np.ndarray((int(cfg['train_data']), 40), np.float32)
+        tags_val_mem = np.ndarray((int(cfg['val_data']), 40), np.float32)
+        tags_test_mem = np.ndarray((int(cfg['test_data']), 40), np.float32)
+
+        for i, mel in pickleLoader(mels_f, int(cfg['train_data'])):
+            mels_mem[i][0] = mel
+        for i, mel in pickleLoader(mels_f, int(cfg['val_data'])):
+            mels_val_mem[i][0] = mel
+        for i, mel in pickleLoader(mels_f, int(cfg['test_data'])):
+            mels_test_mem[i][0] = mel
+
+        for i, tag_vector in pickleLoader(tags_f, int(cfg['train_data'])):
+            tags_mem[i] = tag_vector
+        for i, tag_vector in pickleLoader(tags_f, int(cfg['val_data'])):
+            tags_val_mem[i] = tag_vector
+        for i, tag_vector in pickleLoader(tags_f, int(cfg['test_data'])):
+            tags_test_mem[i] = tag_vector
+
+        print(mels_mem.shape)
+        print(mels_val_mem.shape)
+        print(mels_test_mem.shape)
+        print(tags_mem.shape)
+        print(tags_val_mem.shape)
+        print(tags_test_mem.shape)
+
+        mels_f.close()
+        tags_f.close()
+
 
     kwargs['config'] = cfg
 
