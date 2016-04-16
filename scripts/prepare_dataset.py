@@ -69,9 +69,13 @@ for row in tags_list[1:]:
     except EOFError:
         print 'file broken: ' + row[-1]
     else:
+        print '\r', 'processing: ', count, '/', model.docvecs.count, \
+                '(', count * 100 / model.docvecs.count, '%)',
 
         clips_file.write(''.join(s for s in [clip_id, '\n']))
-        if args.clips_only is True: continue
+        if args.clips_only is True:
+            count += 1
+            continue
 
         spectrum = librosa.feature.melspectrogram(
                 y=y, sr=sr, n_mels=128, fmax=sr/2, n_fft = stft_window,
@@ -101,8 +105,6 @@ for row in tags_list[1:]:
             pickle.dump(spectrum, mels_pickle_file)
 
         count += 1
-        print '\r', 'done: ', count, '/', model.docvecs.count, \
-                '(', count * 100 / model.docvecs.count, '%)',
 
 	if args.production is False and count == 1000: break
 
