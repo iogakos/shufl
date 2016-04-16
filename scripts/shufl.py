@@ -205,7 +205,8 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
 
     # Create a loss expression for training, i.e., a scalar objective we want
     # to minimize, i.e mean square error):
-    prediction = lasagne.layers.get_output(network, deterministic=(mode=='user'))
+    # prediction = lasagne.layers.get_output(network, deterministic=(mode=='user'))
+    prediction = lasagne.layers.get_output(network)
     loss = lasagne.objectives.squared_error(prediction, target_var)
     loss = loss.mean()
 
