@@ -4,6 +4,7 @@
 \usepackage{mathtools}
 \usepackage{hyperref}
 \usepackage{tikz}
+\usepackage{fancyvrb}
 %\usepackage[top=1in, bottom=0.4in]{geometry}
 
 \pagenumbering{gobble}
@@ -147,7 +148,6 @@
     only the maximum value from the set of values in the pool. We did not
     include the L2 normalization global pooling as we could not manage to
     implement it.
-
     \\ \\
     \noindent
     In order to make recommendations we calculate the euclidean distance of the
@@ -190,13 +190,110 @@
     \noindent
     Our implementation provides a full working flow, meaning that it supports
     all the steps from preprocessing the dataset up to the point of getting
-    a list of the 10 most similar tracks given as target a track from the
-    dataset. It also supports multiple execution environments based on the
-    computational power available. We did that because we needed to be able to
-    quickly switch from our local development environments to the production
-    one that we used for training, an EC2 instance equipped with a GPU in AWS.
+    a list of the 10 most similar tracks given a target from the dataset. It
+    also supports multiple execution environments based on the computational
+    power available. We did that because we needed to be able to quickly switch
+    from our local development environments to the production one that we used
+    for training, an EC2 GPU instance running on AWS cloud.
+    \\ \\
+    \noindent
+    All the code and documentation for the project is hosted on github:\\
+    https://github.com/iogakos/shufl
       
   \section{Tests and Results}
+    While evaluating our model we tried several test samples and realized that
+    our model learns some filters but is biased towards the majority of the tones
+    in the dataset which includes mostly classical and instrumental music. We
+    believe that the MagnaTagATune dataset does not contain too many samples to
+    build a really smart network, though it contained enough to build a prototype 
+    / proof of concept which was mainly the purpose of this project.
+    \\ \\
+    \noindent
+    Following we query a track that contains mostly instrumental music and more
+    specifically the violin instrument. On top you can see the difference between
+    the ground truth (real) and the predicted vector from our model, translated
+    into the most similar clip ids with their corresponding tags. Though there are
+    few false positive results in the predicted results, the list includes a bias
+    towards specific harmonics of violin and its similar instrument cello.
+    \begin{Verbatim}[xleftmargin=.5in]
+    $ python shufl.py -m user -t CLIP_2
+    Loading local configuration
+    Loading data...
+    Building model and compiling functions...
+    Entered user mode
+    Calculating closest vectors for CLIP_2
+    predict   real      diff
+    1.028302  1.157982 -0.129680
+    1.024865  1.179301 -0.154436
+    1.043520  0.993746  0.049774
+    1.111636  1.137265 -0.025629
+    1.003731  1.011692 -0.007962
+    0.978039  0.959152  0.018886
+    1.160172  0.915732  0.244440
+    1.090362  1.164641 -0.074278
+    1.081008  0.963084  0.117924
+    1.057104  1.043706  0.013398
+    1.125383  1.129928 -0.004545
+    0.964547  1.072555 -0.108007
+    1.058979  1.085058 -0.026079
+    0.961544  1.260793 -0.299249
+    0.956261  1.242349 -0.286088
+    1.011432  1.115816 -0.104384
+    1.043542  1.023080  0.020463
+    1.046357  0.873973  0.172384
+    0.982478  0.969929  0.012549
+    0.986319  1.045492 -0.059173
+    1.091416  0.902382  0.189034
+    0.955335  0.897604  0.057731
+    1.080080  0.856658  0.223423
+    1.114109  1.112599  0.001510
+    1.015443  1.227245 -0.211801
+    1.089310  0.857949  0.231361
+    1.061282  1.006443  0.054839
+    1.042227  1.082391 -0.040164
+    0.937966  1.278669 -0.340702
+    1.035637  1.115713 -0.080076
+    1.058759  1.073235 -0.014475
+    1.079493  1.118363 -0.038870
+    0.972410  0.982463 -0.010053
+    0.932406  0.888498  0.043908
+    1.018215  1.063535 -0.045320
+    1.103993  1.047916  0.056076
+    1.082609  0.738551  0.344058
+    1.061711  0.954425  0.107286
+    1.061112  1.147689 -0.086577
+    1.117326  1.278288 -0.160962
+    query: CLIP_2'classical','strings','opera','violin'
+    CLIP_52084 'violin','cello'
+    CLIP_15381 'violin','cello'
+    CLIP_26669 'rock','metal'
+    CLIP_25231 'dance','techno','beat'
+    CLIP_53212 'classical','strings','violin','cello'
+    CLIP_10202 'violin','cello'
+    CLIP_29177 'violin','cello'
+    CLIP_28628 'dance','techno','beat'
+    CLIP_51984 'classical','strings','violin','cello'
+    CLIP_51680 'classical','strings','violin','cello'
+    \end{Verbatim}
+
+    We present the same effect from another clip that contains both violin and
+    cello and for clarity we suppressed the vector distances. The model seems to
+    be able to understand the violin's harmonics but is not that fluent with
+    finding combinations of the instrument with cello.
+
+    \begin{Verbatim}[xleftmargin=.5in]
+    query: CLIP_94 'novoice','classical','strings','violin','cello','soft'
+    CLIP_18510 'classical','strings','violin'
+    CLIP_17131 'classical','strings','violin'
+    CLIP_42243 'classical','strings','violin'
+    CLIP_29858 'classical','strings','violin'
+    CLIP_10204 'classical','strings','violin','cello'
+    CLIP_33383 'classical','strings','violin','cello'
+    CLIP_24353 'classical','strings','violin'
+    CLIP_2544 'classical','strings','violin'
+    CLIP_27686 'classical','strings','violin'
+    CLIP_51984 'classical','strings','violin','cello'
+    \end{Verbatim}
 
   \section{Time Constraints}
     Due to very busy end of term and other University comittments we had very
@@ -219,7 +316,8 @@
     the yet to be solved cold start problem and along the way explored concepts
     such as Convolutional Neural Networks, latent vector representations,
     time-frequency analysis of audio data and Cloud Computing.
-
+    \\ \\
+    \noindent
     In the interest of time and computational resources available, we had to
     make a lot of compromises with the most effective one being the used
     dataset. Though being a great resource, the MagnaTagATune dataset seems not
@@ -227,7 +325,8 @@
     filters. Going for larger datasets like the 1 Million Song dataset was
     definitely not a reasonable option, as a full training session for such a
     dataset would take days instead of several hours that our model did.
-
+    \\ \\
+    \noindent
     Being able to classify music in the latent vector space without having
     usage data, can help companies in the industry of digital music
     distribution make more sophisticated decisions for new audio content which
