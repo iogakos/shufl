@@ -347,7 +347,7 @@ def main(num_epochs=200, mode='train', track_id=None, checkpoint=True,
                 else:
                     lasagne.layers.set_all_param_values(network, params)
 
-                    tag_zeros = np.ndarray(
+                    tag_zeros = np.zeros(
                             (1, int(config['latent_v'])), np.float32)
                     _, _, tag_prediction = val_fn(spectrogram, tag_zeros)
                     d2v_model = gensim.models.Doc2Vec.load(d2v_model_path)
